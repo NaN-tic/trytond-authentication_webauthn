@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="__LANG__">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#267f82">
+    <title>__TITLE__</title>
+    <style>__CSS__</style>
+  </head>
+  <body>
+    <main class="webauthn-page">
+      <section class="webauthn-card" aria-labelledby="webauthn-title">
+        <header class="webauthn-header">
+          <div class="brand" aria-label="Tryton">
+            <span class="brand-name">Tryton</span>
+          </div>
+          <h1 id="webauthn-title">__TITLE__</h1>
+        </header>
+
+        <p class="webauthn-context"><strong>__USER__</strong></p>
+
+        <p id="state" class="webauthn-state" role="status" aria-live="polite">
+          __TEXT_INITIAL__
+        </p>
+
+        <div class="webauthn-actions">
+          <button id="approve" class="btn btn-primary" type="button">
+            __TEXT_CONFIRM__
+          </button>
+          <button id="cancel" class="btn btn-secondary" type="button">
+            __TEXT_CANCEL__
+          </button>
+        </div>
+
+      </section>
+    </main>
+    <script>__JS__</script>
+  </body>
+</html>

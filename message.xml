@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!-- This file is part of Tryton.  The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<tryton>
+    <data grouped="1">
+        <record model="ir.message" id="msg_login">
+            <field name="text">Authenticate with your security key or device.</field>
+        </record>
+        <record model="ir.message" id="msg_registration_required">
+            <field name="text">Register a security key or device to continue.</field>
+        </record>
+        <record model="ir.message" id="msg_invalid_response">
+            <field name="text">The WebAuthn response is invalid or expired.</field>
+        </record>
+        <record model="ir.message" id="msg_missing_credential">
+            <field name="text">A WebAuthn credential is required.</field>
+        </record>
+        <record model="ir.message" id="msg_no_user">
+            <field name="text">A logged-in user is required.</field>
+        </record>
+        <record model="ir.message" id="msg_credential_exists">
+            <field name="text">This security key is already registered.</field>
+        </record>
+        <record model="ir.message" id="msg_invalid_label">
+            <field name="text">The security key name cannot be empty.</field>
+        </record>
+        <record model="ir.message" id="msg_confirm_last">
+            <field name="text">Confirm revoking your last security key.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_add_key">
+            <field name="text">Add security key</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_approve_access">
+            <field name="text">Approve access</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_initial">
+            <field name="text">Tap confirm to continue.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_confirm">
+            <field name="text">Confirm with this phone</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_cancel">
+            <field name="text">Cancel</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_waiting">
+            <field name="text">Waiting for biometric, PIN or phone unlock…</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_unavailable">
+            <field name="text">Operation unavailable.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_rejected">
+            <field name="text">Verification was rejected.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_approved">
+            <field name="text">Operation approved. You can return to the computer.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_verification_cancelled">
+            <field name="text">Verification was cancelled.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_cancelled">
+            <field name="text">Operation cancelled.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_cancel_failed">
+            <field name="text">The operation could not be cancelled.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_unsupported">
+            <field name="text">This browser cannot use passkeys.</field>
+        </record>
+    </data>
+</tryton>

@@ -1,0 +1,181 @@
+:root {
+  --tryton-page: #f5f5f5;
+  --tryton-surface: #ffffff;
+  --tryton-text: #333333;
+  --tryton-muted: #666666;
+  --tryton-primary: #267f82;
+  --tryton-primary-hover: #1f6668;
+  --tryton-border: #d9d9d9;
+  --tryton-success: #3c763d;
+  --tryton-error: #a94442;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--tryton-page);
+  color: var(--tryton-text);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.webauthn-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.webauthn-card {
+  width: min(100%, 440px);
+  padding: 24px;
+  background: var(--tryton-surface);
+  border: 1px solid var(--tryton-border);
+  border-radius: 6px;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, .18);
+}
+
+.webauthn-header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--tryton-border);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--tryton-primary);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+h1 {
+  margin: 20px 0 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.webauthn-context {
+  margin: 20px 0;
+  color: var(--tryton-muted);
+  font-size: 14px;
+}
+
+.webauthn-context strong {
+  color: var(--tryton-text);
+  font-weight: 500;
+}
+
+.webauthn-state {
+  min-height: 48px;
+  margin: 0 0 20px;
+  padding: 12px;
+  border-left: 3px solid var(--tryton-primary);
+  background: rgba(38, 127, 130, .08);
+}
+
+.webauthn-state.ok {
+  border-left-color: var(--tryton-success);
+  color: var(--tryton-success);
+  background: rgba(60, 118, 61, .08);
+}
+
+.webauthn-state.error {
+  border-left-color: var(--tryton-error);
+  color: var(--tryton-error);
+  background: rgba(169, 68, 66, .08);
+}
+
+.webauthn-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.btn {
+  min-height: 44px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 200ms ease-out, border-color 200ms ease-out,
+    color 200ms ease-out, opacity 200ms ease-out;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--tryton-primary-hover);
+  outline-offset: 2px;
+}
+
+.btn:active {
+  opacity: .85;
+}
+
+.btn-primary {
+  background: var(--tryton-primary);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--tryton-primary-hover);
+}
+
+.btn-secondary {
+  border-color: var(--tryton-border);
+  background: var(--tryton-surface);
+  color: var(--tryton-primary);
+}
+
+.btn-secondary:hover {
+  border-color: var(--tryton-primary);
+  background: rgba(38, 127, 130, .06);
+}
+
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+@media (min-width: 480px) {
+  .webauthn-card {
+    padding: 32px;
+  }
+
+  .webauthn-actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .btn-secondary {
+    width: auto;
+    min-width: 112px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+
+  .btn:active {
+    opacity: 1;
+  }
+}

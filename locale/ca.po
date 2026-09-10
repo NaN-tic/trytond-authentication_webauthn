@@ -1,0 +1,87 @@
+#
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\n"
+
+msgctxt "model:ir.message,text:msg_mobile_add_key"
+msgid "Add security key"
+msgstr "Afegir clau"
+
+msgctxt "model:ir.message,text:msg_mobile_approve_access"
+msgid "Approve access"
+msgstr "Aprovar l'accés"
+
+msgctxt "model:ir.message,text:msg_mobile_initial"
+msgid "Tap confirm to continue."
+msgstr "Prem confirmar per continuar."
+
+msgctxt "model:ir.message,text:msg_mobile_confirm"
+msgid "Confirm with this phone"
+msgstr "Confirma amb aquest telèfon"
+
+msgctxt "model:ir.message,text:msg_mobile_cancel"
+msgid "Cancel"
+msgstr "Cancel·la"
+
+msgctxt "model:ir.message,text:msg_mobile_waiting"
+msgid "Waiting for biometric, PIN or phone unlock…"
+msgstr "Esperant la biometria, el PIN o el desbloqueig del telèfon…"
+
+msgctxt "model:ir.message,text:msg_mobile_unavailable"
+msgid "Operation unavailable."
+msgstr "Operació no disponible."
+
+msgctxt "model:ir.message,text:msg_mobile_rejected"
+msgid "Verification was rejected."
+msgstr "La verificació ha estat rebutjada."
+
+msgctxt "model:ir.message,text:msg_mobile_approved"
+msgid "Operation approved. You can return to the computer."
+msgstr "Operació aprovada. Ja pots tornar a l'ordinador."
+
+msgctxt "model:ir.message,text:msg_mobile_verification_cancelled"
+msgid "Verification was cancelled."
+msgstr "La verificació s'ha cancel·lat."
+
+msgctxt "model:ir.message,text:msg_mobile_cancelled"
+msgid "Operation cancelled."
+msgstr "Operació cancel·lada."
+
+msgctxt "model:ir.message,text:msg_mobile_cancel_failed"
+msgid "The operation could not be cancelled."
+msgstr "No s'ha pogut cancel·lar l'operació."
+
+msgctxt "model:ir.message,text:msg_mobile_unsupported"
+msgid "This browser cannot use passkeys."
+msgstr "Aquest navegador no pot utilitzar claus d'accés."
+
+msgctxt "model:ir.message,text:msg_login"
+msgid "Authenticate with your security key or device."
+msgstr "Autentica't amb la teva clau de seguretat o dispositiu."
+
+msgctxt "model:ir.message,text:msg_registration_required"
+msgid "Register a security key or device to continue."
+msgstr "Registra una clau de seguretat o dispositiu per continuar."
+
+msgctxt "model:ir.message,text:msg_invalid_response"
+msgid "The WebAuthn response is invalid or expired."
+msgstr "La resposta WebAuthn no és vàlida o ha caducat."
+
+msgctxt "model:ir.message,text:msg_no_user"
+msgid "A logged-in user is required."
+msgstr "Cal un usuari connectat."
+
+msgctxt "model:ir.message,text:msg_credential_exists"
+msgid "This security key is already registered."
+msgstr "Aquesta clau de seguretat ja està registrada."
+
+msgctxt "model:ir.message,text:msg_invalid_label"
+msgid "The security key name cannot be empty."
+msgstr "El nom de la clau de seguretat no pot estar buit."
+
+msgctxt "model:ir.message,text:msg_confirm_last"
+msgid "Confirm revoking your last security key."
+msgstr "Confirma la revocació de la teva última clau de seguretat."
+
+msgctxt "model:ir.message,text:msg_missing_credential"
+msgid "A WebAuthn credential is required."
+msgstr "Cal una credencial WebAuthn."

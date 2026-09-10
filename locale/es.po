@@ -1,0 +1,87 @@
+#
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\n"
+
+msgctxt "model:ir.message,text:msg_mobile_add_key"
+msgid "Add security key"
+msgstr "Añadir llave"
+
+msgctxt "model:ir.message,text:msg_mobile_approve_access"
+msgid "Approve access"
+msgstr "Aprobar acceso"
+
+msgctxt "model:ir.message,text:msg_mobile_initial"
+msgid "Tap confirm to continue."
+msgstr "Pulsa confirmar para continuar."
+
+msgctxt "model:ir.message,text:msg_mobile_confirm"
+msgid "Confirm with this phone"
+msgstr "Confirmar con este teléfono"
+
+msgctxt "model:ir.message,text:msg_mobile_cancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgctxt "model:ir.message,text:msg_mobile_waiting"
+msgid "Waiting for biometric, PIN or phone unlock…"
+msgstr "Esperando biometría, PIN o desbloqueo del teléfono…"
+
+msgctxt "model:ir.message,text:msg_mobile_unavailable"
+msgid "Operation unavailable."
+msgstr "Operación no disponible."
+
+msgctxt "model:ir.message,text:msg_mobile_rejected"
+msgid "Verification was rejected."
+msgstr "La verificación fue rechazada."
+
+msgctxt "model:ir.message,text:msg_mobile_approved"
+msgid "Operation approved. You can return to the computer."
+msgstr "Operación aprobada. Ya puedes volver al ordenador."
+
+msgctxt "model:ir.message,text:msg_mobile_verification_cancelled"
+msgid "Verification was cancelled."
+msgstr "La verificación fue cancelada."
+
+msgctxt "model:ir.message,text:msg_mobile_cancelled"
+msgid "Operation cancelled."
+msgstr "Operación cancelada."
+
+msgctxt "model:ir.message,text:msg_mobile_cancel_failed"
+msgid "The operation could not be cancelled."
+msgstr "No se pudo cancelar la operación."
+
+msgctxt "model:ir.message,text:msg_mobile_unsupported"
+msgid "This browser cannot use passkeys."
+msgstr "Este navegador no admite llaves de acceso."
+
+msgctxt "model:ir.message,text:msg_login"
+msgid "Authenticate with your security key or device."
+msgstr "Autentícate con tu llave de seguridad o dispositivo."
+
+msgctxt "model:ir.message,text:msg_registration_required"
+msgid "Register a security key or device to continue."
+msgstr "Registra una llave de seguridad o dispositivo para continuar."
+
+msgctxt "model:ir.message,text:msg_invalid_response"
+msgid "The WebAuthn response is invalid or expired."
+msgstr "La respuesta de WebAuthn no es válida o ha caducado."
+
+msgctxt "model:ir.message,text:msg_no_user"
+msgid "A logged-in user is required."
+msgstr "Se requiere un usuario conectado."
+
+msgctxt "model:ir.message,text:msg_credential_exists"
+msgid "This security key is already registered."
+msgstr "Esta llave de seguridad ya está registrada."
+
+msgctxt "model:ir.message,text:msg_invalid_label"
+msgid "The security key name cannot be empty."
+msgstr "El nombre de la llave de seguridad no puede estar vacío."
+
+msgctxt "model:ir.message,text:msg_confirm_last"
+msgid "Confirm revoking your last security key."
+msgstr "Confirma la revocación de tu última llave de seguridad."
+
+msgctxt "model:ir.message,text:msg_missing_credential"
+msgid "A WebAuthn credential is required."
+msgstr "Se requiere una credencial WebAuthn."
