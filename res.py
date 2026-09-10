@@ -6,6 +6,7 @@ import json
 from trytond.exceptions import LoginException
 from trytond.i18n import gettext
 from trytond.pool import Pool, PoolMeta
+from trytond.transaction import Transaction
 from webauthn import (
     verify_authentication_response,
     verify_registration_response,
@@ -14,7 +15,6 @@ from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
 from webauthn.helpers.exceptions import WebAuthnException
 
 from . import common
-from .models import WebAuthnChallenge, WebAuthnCredential
 
 
 class User(metaclass=PoolMeta):
@@ -34,6 +34,9 @@ class User(metaclass=PoolMeta):
                 type_ = 'webauthn'
                 message = 'authentication_webauthn.msg_login'
             else:
+                # A new authenticator proves possession, not account ownership.
+                if cls._login_password(login, parameters) != user_id:
+                    return
                 purpose = 'registration'
                 type_ = 'webauthn_registration'
                 message = 'authentication_webauthn.msg_registration_required'
@@ -48,7 +51,11 @@ class User(metaclass=PoolMeta):
         desktop_token, credential_data = parsed
         operation = common.get_operation(
             desktop_token, channel='desktop')
-        if not operation or operation.user.id != user_id:
+        if (not operation or operation.user.id != user_id
+                or operation.flow != 'login'):
+            return
+        if (operation.purpose == 'registration'
+                and cls._login_password(login, parameters) != user_id):
             return
         if operation.status == 'completed':
             if common.consume_operation(operation):
@@ -68,6 +75,10 @@ class User(metaclass=PoolMeta):
             return
         if common.complete_operation(operation, consumed=True):
             return user_id
+        # Verification may have stored a credential or updated its counter
+        # before the challenge expired or became unavailable. A failed login
+        # must not commit those changes.
+        Transaction().rollback()
 
     @staticmethod
     def _parse_login_payload(payload):

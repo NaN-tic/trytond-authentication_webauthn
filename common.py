@@ -85,13 +85,15 @@ def hash_token(token):
     return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
-def create_operation(user, purpose, flow='login'):
+def create_operation(user, purpose, flow='login', *, initiator=None):
     Operation = Pool().get('res.user.webauthn.challenge')
     challenge = token_bytes(32)
     mobile_token = token_urlsafe(32)
     desktop_token = token_urlsafe(32)
     now = datetime.datetime.now()
     request = Transaction().context.get('_request') or {}
+    if initiator is None:
+        initiator = request
     Operation.create([{
             'user': user.id,
             'purpose': purpose,
@@ -105,7 +107,8 @@ def create_operation(user, purpose, flow='login'):
             'expires_at': now + datetime.timedelta(seconds=challenge_ttl()),
             'attempts': 0,
             'consumed': False,
-            'initiator': request.get('remote_addr'),
+            'initiator': initiator.get('remote_addr'),
+            'initiator_user_agent': (initiator.get('user_agent') or '')[:512],
             }])
     database = quote(Transaction().database.name, safe='')
     encoded_mobile = quote(mobile_token, safe='')
@@ -201,8 +204,6 @@ def record_failed_attempt(operation):
     table = Operation.__table__()
     attempts = table.attempts + 1
     rejected_expression = attempts >= max_attempts()
-    new_attempts = operation.attempts + 1
-    rejected = new_attempts >= max_attempts()
     where = (
         (table.id == operation.id)
         & (table.status == 'pending')
@@ -223,19 +224,23 @@ def record_failed_attempt(operation):
         cursor.execute(*table.update(values, updates, where=where))
         if not cursor.rowcount:
             return False
+        # Read back the atomic update while holding the write lock. The record
+        # cache may predate another request's increment and must not undo it.
+        cursor.execute(*table.select(
+            table.attempts, table.status, table.status_reason,
+            where=table.id == operation.id))
+        attempts, status, status_reason = cursor.fetchone()
     Operation.write([operation], {
-        'attempts': operation.attempts + 1,
-        **({
-            'status': 'cancelled',
-            'status_reason': 'rejected',
-            } if rejected else {}),
+        'attempts': attempts,
+        'status': status,
+        'status_reason': status_reason,
         })
     return True
 
 
 def create_challenge(user_id, purpose):
     User = Pool().get('res.user')
-    descriptor = create_operation(User(user_id), purpose)
+    descriptor = create_operation(User(user_id), purpose, flow='preferences')
     operation = get_operation(
         descriptor['desktop_token'], channel='desktop', pending=True)
     return descriptor['desktop_token'], operation.challenge
