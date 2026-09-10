@@ -85,3 +85,35 @@ msgstr "Confirma la revocación de tu última llave de seguridad."
 msgctxt "model:ir.message,text:msg_missing_credential"
 msgid "A WebAuthn credential is required."
 msgstr "Se requiere una credencial WebAuthn."
+
+msgctxt "model:ir.message,text:msg_mobile_initiator"
+msgid "Request initiated from"
+msgstr "Solicitud iniciada desde"
+
+msgctxt "model:ir.message,text:msg_mobile_browser"
+msgid "Browser (reported by the device)"
+msgstr "Navegador (declarado por el dispositivo)"
+
+msgctxt "model:ir.message,text:msg_mobile_ip_address"
+msgid "IP address"
+msgstr "Dirección IP"
+
+msgctxt "model:ir.message,text:msg_mobile_unknown"
+msgid "Not available"
+msgstr "No disponible"
+
+msgctxt "model:ir.message,text:msg_mobile_check_request"
+msgid "Only confirm if you initiated this request on the device shown above. Otherwise, cancel."
+msgstr "Confirma solo si has iniciado esta solicitud desde el dispositivo indicado. De lo contrario, cancela."
+
+msgctxt "model:ir.message,text:msg_mobile_os"
+msgid "Operating system (reported by the device)"
+msgstr "Sistema operativo (declarado por el dispositivo)"
+
+msgctxt "model:ir.message,text:msg_mobile_technical_details"
+msgid "Technical details"
+msgstr "Detalles técnicos"
+
+msgctxt "model:ir.message,text:msg_mobile_requested_at"
+msgid "Requested at"
+msgstr "Fecha y hora de la solicitud"

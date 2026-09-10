@@ -19,6 +19,25 @@
 
         <p class="webauthn-context"><strong>__USER__</strong></p>
 
+        <section class="webauthn-initiator" aria-labelledby="initiator-title">
+          <h2 id="initiator-title">__TEXT_INITIATOR__</h2>
+          <dl>
+            <dt>__TEXT_BROWSER__</dt>
+            <dd>__INITIATOR_BROWSER__</dd>
+            <dt>__TEXT_OS__</dt>
+            <dd>__INITIATOR_OS__</dd>
+            <dt>__TEXT_IP_ADDRESS__</dt>
+            <dd>__INITIATOR_IP__</dd>
+            <dt>__TEXT_REQUESTED_AT__</dt>
+            <dd><time id="requested-at" datetime="__REQUESTED_AT_ISO__">__REQUESTED_AT_UTC__</time></dd>
+          </dl>
+          <details>
+            <summary>__TEXT_TECHNICAL_DETAILS__</summary>
+            <p>__INITIATOR_USER_AGENT__</p>
+          </details>
+          <p>__TEXT_CHECK_REQUEST__</p>
+        </section>
+
         <p id="state" class="webauthn-state" role="status" aria-live="polite">
           __TEXT_INITIAL__
         </p>

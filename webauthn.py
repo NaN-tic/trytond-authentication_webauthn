@@ -66,7 +66,9 @@ class WebAuthnChallenge(ModelSQL):
     completed_at = fields.DateTime('Completed At', readonly=True)
     attempts = fields.Integer('Attempts', required=True, readonly=True)
     consumed = fields.Boolean('Consumed', readonly=True)
-    initiator = fields.Char('Initiating Browser', readonly=True)
+    initiator = fields.Char('Initiating IP Address', readonly=True)
+    initiator_user_agent = fields.Char(
+        'Initiating User Agent', size=512, readonly=True)
 
     @staticmethod
     def default_attempts():

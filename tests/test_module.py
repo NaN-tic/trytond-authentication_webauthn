@@ -12,13 +12,14 @@ from trytond import backend
 import trytond.config as config
 from trytond.exceptions import LoginException
 from trytond.pool import Pool
-from trytond.tests.test_tryton import DB_NAME, ModuleTestCase, with_transaction
+from trytond.tests import test_tryton
+from trytond.tests.test_tryton import DB_NAME, with_transaction
 from trytond.transaction import Transaction
 
-from .. import common
+from trytond.modules.authentication_webauthn import common
 
 
-class AuthenticationWebAuthnTestCase(ModuleTestCase):
+class AuthenticationWebAuthnTestCase(test_tryton.ModuleTestCase):
     'Test Authentication WebAuthn module'
     module = 'authentication_webauthn'
 
@@ -33,13 +34,16 @@ class AuthenticationWebAuthnTestCase(ModuleTestCase):
         return User(1)
 
     @with_transaction()
-    def test_login_requests_registration_without_credential(self):
+    def test_login_requests_registration_with_password(self):
         User = Pool().get('res.user')
         Challenge = Pool().get('res.user.webauthn.challenge')
         user = self.create_user()
+        User.write([user], {'password': 'registration-test-password'})
 
         with self.assertRaises(LoginException) as context:
-            User._login_webauthn(user.login, {})
+            User._login_webauthn(user.login, {
+                'password': 'registration-test-password',
+                })
 
         self.assertEqual(context.exception.name, 'webauthn')
         self.assertEqual(context.exception.type, 'webauthn_registration')
@@ -59,7 +63,6 @@ class AuthenticationWebAuthnTestCase(ModuleTestCase):
 
     @with_transaction()
     def test_qr_operation_stores_only_token_hashes(self):
-        User = Pool().get('res.user')
         Operation = Pool().get('res.user.webauthn.challenge')
         user = self.create_user()
 

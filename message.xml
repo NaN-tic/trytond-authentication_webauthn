@@ -66,5 +66,29 @@ this repository contains the full copyright notices and license terms. -->
         <record model="ir.message" id="msg_mobile_unsupported">
             <field name="text">This browser cannot use passkeys.</field>
         </record>
+        <record model="ir.message" id="msg_mobile_initiator">
+            <field name="text">Request initiated from</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_browser">
+            <field name="text">Browser (reported by the device)</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_ip_address">
+            <field name="text">IP address</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_unknown">
+            <field name="text">Not available</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_check_request">
+            <field name="text">Only confirm if you initiated this request on the device shown above. Otherwise, cancel.</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_os">
+            <field name="text">Operating system (reported by the device)</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_technical_details">
+            <field name="text">Technical details</field>
+        </record>
+        <record model="ir.message" id="msg_mobile_requested_at">
+            <field name="text">Requested at</field>
+        </record>
     </data>
 </tryton>

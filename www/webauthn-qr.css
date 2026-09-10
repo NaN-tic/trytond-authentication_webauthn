@@ -88,6 +88,33 @@ h1 {
   background: rgba(38, 127, 130, .08);
 }
 
+.webauthn-initiator {
+  margin-bottom: 20px;
+  padding: 12px;
+  border: 1px solid var(--tryton-border);
+  border-radius: 4px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.webauthn-initiator h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.webauthn-initiator dt {
+  font-weight: 600;
+}
+
+.webauthn-initiator dd {
+  margin: 0 0 12px;
+  color: var(--tryton-muted);
+}
+
+.webauthn-initiator p {
+  margin-bottom: 0;
+}
+
 .webauthn-state.ok {
   border-left-color: var(--tryton-success);
   color: var(--tryton-success);

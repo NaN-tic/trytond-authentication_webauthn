@@ -5,13 +5,13 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from trytond.pool import Pool
-from trytond.tests.test_tryton import RouteTestCase
+from trytond.tests import test_tryton
 from trytond.transaction import Transaction
 
-from .. import common
+from trytond.modules.authentication_webauthn import common
 
 
-class AuthenticationWebAuthnRouteTestCase(RouteTestCase):
+class AuthenticationWebAuthnRouteTestCase(test_tryton.RouteTestCase):
     "Test Authentication WebAuthn routes"
     module = 'authentication_webauthn'
 

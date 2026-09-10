@@ -2,6 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 from html import escape
 import json
+import re
 from io import BytesIO
 from pathlib import Path
 
@@ -64,6 +65,17 @@ _MOBILE_MESSAGES = {
     'add_key': ('msg_mobile_add_key', 'Add security key'),
     'approve_access': ('msg_mobile_approve_access', 'Approve access'),
     'initial': ('msg_mobile_initial', 'Tap confirm to continue.'),
+    'initiator': ('msg_mobile_initiator', 'Request initiated from'),
+    'browser': ('msg_mobile_browser', 'Browser (reported by the device)'),
+    'os': ('msg_mobile_os', 'Operating system (reported by the device)'),
+    'technical_details': ('msg_mobile_technical_details', 'Technical details'),
+    'ip_address': ('msg_mobile_ip_address', 'IP address'),
+    'requested_at': ('msg_mobile_requested_at', 'Requested at'),
+    'unknown': ('msg_mobile_unknown', 'Not available'),
+    'check_request': (
+        'msg_mobile_check_request',
+        'Only confirm if you initiated this request on the device shown above. '
+        'Otherwise, cancel.'),
     'confirm': ('msg_mobile_confirm', 'Confirm with this phone'),
     'cancel': ('msg_mobile_cancel', 'Cancel'),
     'waiting': (
@@ -106,8 +118,42 @@ def _mobile_texts(operation):
     return texts
 
 
+def _browser_details(user_agent):
+    # Check specific browsers before the compatibility tokens they include.
+    browser = None
+    for name, pattern in [
+            ('Edge', r'\b(?:Edg|EdgA|EdgiOS|Edge)/(\d+)'),
+            ('Opera', r'\b(?:OPR|OPT)/(\d+)'),
+            ('Samsung Internet', r'\bSamsungBrowser/(\d+)'),
+            ('Firefox', r'\b(?:Firefox|FxiOS)/(\d+)'),
+            ('Chromium', r'\bChromium/(\d+)'),
+            ('Chrome', r'\b(?:Chrome|CriOS)/(\d+)'),
+            ('Safari', r'\bVersion/(\d+).*\bSafari/'),
+            ]:
+        if match := re.search(pattern, user_agent):
+            browser = f'{name} {match[1]}'
+            break
+    # OS versions are often frozen or reduced (Windows 11 reports NT 10.0).
+    operating_system = None
+    for name, pattern in [
+            ('Windows Phone', r'Windows Phone'),
+            ('iOS / iPadOS', r'iPhone|iPad|iPod'),
+            ('Android', r'Android'),
+            ('ChromeOS', r'CrOS'),
+            ('Windows', r'Windows'),
+            ('macOS', r'Macintosh|Mac OS X'),
+            ('Linux', r'Linux'),
+            ]:
+        if re.search(pattern, user_agent):
+            operating_system = name
+            break
+    return browser, operating_system
+
+
 def _mobile_page(operation, token):
     texts = _mobile_texts(operation)
+    user_agent = operation.initiator_user_agent or ''
+    browser, operating_system = _browser_details(user_agent)
     registration = operation.purpose == 'registration'
     action = 'create' if registration else 'get'
     template_dir = Path(__file__).with_name('www')
@@ -127,16 +173,32 @@ def _mobile_page(operation, token):
         .replace('__TEXT_CANCEL_FAILED__',
             json.dumps(texts['cancel_failed']))
         .replace('__TEXT_UNSUPPORTED__', json.dumps(texts['unsupported'])))
-    return (template
-        .replace('__LANG__', escape(texts['language']))
-        .replace('__TITLE__', escape(texts['title']))
-        .replace(
-            '__USER__', escape(operation.user.name or operation.user.login))
-        .replace('__TEXT_INITIAL__', escape(texts['initial']))
-        .replace('__TEXT_CONFIRM__', escape(texts['confirm']))
-        .replace('__TEXT_CANCEL__', escape(texts['cancel']))
-        .replace('__CSS__', css)
-        .replace('__JS__', javascript))
+    values = {
+        '__LANG__': escape(texts['language']),
+        '__TITLE__': escape(texts['title']),
+        '__USER__': escape(operation.user.name or operation.user.login),
+        '__TEXT_INITIAL__': escape(texts['initial']),
+        '__TEXT_CONFIRM__': escape(texts['confirm']),
+        '__TEXT_CANCEL__': escape(texts['cancel']),
+        '__TEXT_INITIATOR__': escape(texts['initiator']),
+        '__TEXT_BROWSER__': escape(texts['browser']),
+        '__TEXT_OS__': escape(texts['os']),
+        '__TEXT_TECHNICAL_DETAILS__': escape(texts['technical_details']),
+        '__TEXT_IP_ADDRESS__': escape(texts['ip_address']),
+        '__TEXT_REQUESTED_AT__': escape(texts['requested_at']),
+        '__REQUESTED_AT_ISO__': operation.created_at.isoformat() + 'Z',
+        '__REQUESTED_AT_UTC__': operation.created_at.strftime(
+            '%Y-%m-%d %H:%M:%S UTC'),
+        '__TEXT_CHECK_REQUEST__': escape(texts['check_request']),
+        '__INITIATOR_IP__': escape(operation.initiator or texts['unknown']),
+        '__INITIATOR_BROWSER__': escape(browser or texts['unknown']),
+        '__INITIATOR_OS__': escape(operating_system or texts['unknown']),
+        '__INITIATOR_USER_AGENT__': escape(user_agent or texts['unknown']),
+        '__CSS__': css,
+        '__JS__': javascript,
+        }
+    # Substitute once so user-controlled text cannot expand template markers.
+    return re.sub(r'__[A-Z_]+__', lambda match: values[match[0]], template)
 
 
 @app.route('/<database_name>/authentication/webauthn/qr/<mobile_token>', methods={'GET'})
@@ -194,6 +256,10 @@ def mobile_complete(request, pool, mobile_token):
         User._record_failed_attempt(operation)
         return _json({'status': 'rejected'}, HTTPStatus.BAD_REQUEST)
     if not common.complete_operation(operation):
+        # Verification may have stored a credential or updated its counter
+        # before the challenge expired or became unavailable. The route commits
+        # even error responses, so undo those changes before returning HTTP 410.
+        Transaction().rollback()
         return _json({'status': 'expired'}, HTTPStatus.GONE)
     return _json({'status': 'approved'})
 
@@ -254,6 +320,10 @@ def desktop_complete(request, pool):
         User._record_failed_attempt(operation)
         return _json({'status': 'rejected'}, HTTPStatus.BAD_REQUEST)
     if not common.complete_operation(operation):
+        # Verification may have stored a credential or updated its counter
+        # before the challenge expired or became unavailable. The route commits
+        # even error responses, so undo those changes before returning HTTP 410.
+        Transaction().rollback()
         return _json({'status': 'expired'}, HTTPStatus.GONE)
     return _json({'status': 'approved'})
 
@@ -267,7 +337,10 @@ def desktop_regenerate(request, pool):
     pool.get('res.user.webauthn.challenge').write([operation], {
             'status': 'cancelled', 'status_reason': 'regenerated'})
     return _json(common.create_operation(operation.user, operation.purpose,
-            flow=operation.flow))
+            flow=operation.flow, initiator={
+                'remote_addr': operation.initiator,
+                'user_agent': operation.initiator_user_agent,
+                }))
 
 
 @app.route('/<database_name>/authentication/webauthn/desktop/cancel', methods={'POST'})
