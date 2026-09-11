@@ -4,11 +4,10 @@ import json
 import unittest
 from unittest.mock import patch
 
-import cbor2
 from cryptography.hazmat.primitives.asymmetric import ec
 from proteus import Model
 from werkzeug.test import Client
-from webauthn.helpers import bytes_to_base64url
+from webauthn.helpers import bytes_to_base64url, encode_cbor
 
 import trytond.config as config
 from trytond import security
@@ -36,7 +35,7 @@ class TestRegistrationSecurity(unittest.TestCase):
         # Emulate an ES256 authenticator with user presence and verification.
         public_key = ec.generate_private_key(ec.SECP256R1()).public_key()
         numbers = public_key.public_numbers()
-        cose_key = cbor2.dumps({
+        cose_key = encode_cbor({
             1: 2, 3: -7, -1: 1,
             -2: numbers.x.to_bytes(32, 'big'),
             -3: numbers.y.to_bytes(32, 'big'),
@@ -56,7 +55,7 @@ class TestRegistrationSecurity(unittest.TestCase):
             'type': 'public-key',
             'response': {
                 'clientDataJSON': bytes_to_base64url(client_data),
-                'attestationObject': bytes_to_base64url(cbor2.dumps({
+                'attestationObject': bytes_to_base64url(encode_cbor({
                     'fmt': 'none', 'attStmt': {}, 'authData': auth_data,
                     })),
                 },
