@@ -24,6 +24,8 @@ from webauthn.helpers.structs import (
     UserVerificationRequirement,
 )
 
+from .wsgi import user_agent
+
 
 def rp_id():
     parsed = urlsplit(base_url())
@@ -93,7 +95,10 @@ def create_operation(user, purpose, flow='login', *, initiator=None):
     now = datetime.datetime.now()
     request = Transaction().context.get('_request') or {}
     if initiator is None:
-        initiator = request
+        initiator = {
+            **request,
+            'user_agent': user_agent.get() or request.get('user_agent'),
+            }
     Operation.create([{
             'user': user.id,
             'purpose': purpose,

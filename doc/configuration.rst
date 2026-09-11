@@ -48,7 +48,10 @@ WebAuthn remain available as alternatives from the QR dialog.
 The mobile confirmation page displays the initiating connection's IP address
 and a readable browser name, major version and operating system, inferred from
 the reported User-Agent. The full User-Agent is available under technical
-details. Unrecognized browsers or systems display "Not available"; operating
+details.
+The module captures the User-Agent through its own WSGI middleware, without
+requiring changes to Tryton's request context, and stores at most 512 characters.
+Unrecognized browsers or systems display "Not available"; operating
 system versions are omitted because browsers may report reduced or frozen
 versions. These details are preserved when the QR
 is regenerated. The browser information is untrusted and is shown as a hint,
