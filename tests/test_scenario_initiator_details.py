@@ -7,6 +7,7 @@ from werkzeug.test import Client
 
 import trytond.config as config
 from trytond.modules.authentication_webauthn import common
+from trytond.modules.authentication_webauthn.wsgi import user_agent
 from trytond.pool import Pool
 from trytond.protocols.wrappers import Response
 from trytond.tests.test_tryton import drop_db
@@ -40,13 +41,14 @@ class TestInitiatorDetails(unittest.TestCase):
         browser = ('Mozilla/5.0 (X11; Linux x86_64) Firefox/140.0 '
             '<script>alert(1)</script> __JS__')
 
-        # Go through HTTP login so metadata must come from Request.context.
+        # Go through HTTP login without requiring User-Agent in Request.context.
         response = client.post(f'/{database}/rpc/', json={
             'id': 1, 'method': 'common.db.login',
             'params': [user.login, {'password': 'initiator-test-password'}],
             }, headers={'User-Agent': browser},
             environ_overrides={'REMOTE_ADDR': '192.0.2.10'})
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(user_agent.get(), '')
         self.assertEqual(response.json['error'][0], 'LoginException')
         descriptor = json.loads(response.json['error'][1][1])
         with Transaction().start(database, 0):
@@ -99,6 +101,9 @@ class TestInitiatorDetails(unittest.TestCase):
             descriptor = common.create_operation(
                 Pool().get('res.user')(user.id), 'registration',
                 flow='preferences')
+            operation = common.get_operation(
+                descriptor['desktop_token'], channel='desktop')
+            self.assertFalse(operation.initiator_user_agent)
         response = client.get(f"{base}/qr/{descriptor['mobile_token']}")
         self.assertEqual(response.status_code, 200)
         self.assertIn('Not available', response.text)
@@ -112,6 +117,16 @@ class TestInitiatorDetails(unittest.TestCase):
             operation = common.get_operation(
                 descriptor['desktop_token'], channel='desktop')
             self.assertEqual(operation.initiator_user_agent, 'x' * 512)
+
+        response = client.post(f'/{database}/rpc/', json={
+            'id': 3, 'method': 'common.db.login',
+            'params': [user.login, {'password': 'initiator-test-password'}],
+            })
+        descriptor = json.loads(response.json['error'][1][1])
+        with Transaction().start(database, 0):
+            operation = common.get_operation(
+                descriptor['desktop_token'], channel='desktop')
+            self.assertFalse(operation.initiator_user_agent)
 
         for agent, browser_name, os_name in [
                 ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
