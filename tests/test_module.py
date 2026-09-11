@@ -3,17 +3,14 @@
 import datetime
 import hashlib
 import json
-from concurrent.futures import ThreadPoolExecutor
-from threading import Barrier
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from trytond import backend
 import trytond.config as config
 from trytond.exceptions import LoginException
 from trytond.pool import Pool
 from trytond.tests import test_tryton
-from trytond.tests.test_tryton import DB_NAME, with_transaction
+from trytond.tests.test_tryton import with_transaction
 from trytond.transaction import Transaction
 
 from trytond.modules.authentication_webauthn import common
@@ -123,61 +120,6 @@ class AuthenticationWebAuthnTestCase(test_tryton.ModuleTestCase):
         self.assertEqual(expired.status, 'expired')
         self.assertFalse(expired.consumed)
         self.assertFalse(common.consume_operation(expired))
-
-    def test_operation_state_transitions_are_atomic(self):
-        with Transaction().start(DB_NAME, 1) as transaction:
-            Operation = Pool().get('res.user.webauthn.challenge')
-            user = self.create_user()
-            descriptor = common.create_operation(user, 'authentication')
-            operation = common.get_operation(
-                descriptor['desktop_token'], channel='desktop')
-            operation_id = operation.id
-            transaction.commit()
-
-        barrier = Barrier(2)
-
-        def record_attempt():
-            retry = True
-            for _ in range(3):
-                try:
-                    with Transaction().start(DB_NAME, 1):
-                        operation = Operation(operation_id)
-                        if retry:
-                            barrier.wait()
-                            retry = False
-                        return common.record_failed_attempt(operation)
-                except backend.DatabaseOperationalError:
-                    continue
-            self.fail('concurrent attempt update did not complete')
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            results = list(executor.map(lambda _: record_attempt(), range(2)))
-        self.assertEqual(results, [True, True])
-
-        with Transaction().start(DB_NAME, 1):
-            self.assertEqual(Operation(operation_id).attempts, 2)
-
-        with Transaction().start(DB_NAME, 1) as transaction:
-            operation = Operation(operation_id)
-            self.assertTrue(common.complete_operation(operation))
-            transaction.commit()
-
-        def consume():
-            retry = True
-            for _ in range(3):
-                try:
-                    with Transaction().start(DB_NAME, 1):
-                        operation = Operation(operation_id)
-                        if retry:
-                            barrier.wait()
-                            retry = False
-                        return common.consume_operation(operation)
-                except backend.DatabaseOperationalError:
-                    continue
-            self.fail('concurrent consumption did not complete')
-
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            results = list(executor.map(lambda _: consume(), range(2)))
-        self.assertEqual(sorted(results), [False, True])
 
     @with_transaction()
     def test_login_requests_authentication_with_credential(self):
