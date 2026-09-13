@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<tryton>
+    <data>
+        <record model="ir.ui.view" id="credential_view_tree">
+            <field name="model">res.user.webauthn.credential</field>
+            <field name="type">tree</field>
+            <field name="name">credential_list</field>
+        </record>
+        <record model="ir.ui.view" id="credential_view_form">
+            <field name="model">res.user.webauthn.credential</field>
+            <field name="type">form</field>
+            <field name="name">credential_form</field>
+        </record>
+        <record model="ir.ui.view" id="user_view_form">
+            <field name="model">res.user</field>
+            <field name="inherit" ref="res.user_view_form"/>
+            <field name="name">user_form</field>
+        </record>
+        <record model="ir.ui.view" id="user_view_form_preferences">
+            <field name="model">res.user</field>
+            <field name="inherit" ref="res.user_view_form_preferences"/>
+            <field name="name">user_form</field>
+        </record>
+        <record model="ir.model.access" id="access_credential">
+            <field name="model">res.user.webauthn.credential</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+        <record model="ir.rule.group" id="rule_group_credential">
+            <field name="name">Own security keys</field>
+            <field name="model">res.user.webauthn.credential</field>
+            <field name="global_p" eval="False"/>
+            <field name="default_p" eval="True"/>
+        </record>
+        <record model="ir.rule" id="rule_credential">
+            <field name="rule_group" ref="rule_group_credential"/>
+            <field name="domain" eval="[('user', '=', Eval('user_id', -1))]" pyson="1"/>
+        </record>
+        <record model="ir.rule.group" id="rule_group_credential_admin">
+            <field name="name">All security keys</field>
+            <field name="model">res.user.webauthn.credential</field>
+            <field name="global_p" eval="False"/>
+            <field name="default_p" eval="False"/>
+        </record>
+        <record model="ir.rule" id="rule_credential_admin">
+            <field name="rule_group" ref="rule_group_credential_admin"/>
+            <field name="domain" eval="[]" pyson="1"/>
+        </record>
+        <record model="ir.rule.group-res.group" id="rule_credential_admin_group">
+            <field name="rule_group" ref="rule_group_credential_admin"/>
+            <field name="group" ref="res.group_admin"/>
+        </record>
+        <record model="ir.model.access" id="access_challenge">
+            <field name="model">res.user.webauthn.challenge</field>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+        <record model="ir.action.act_window" id="act_credential">
+            <field name="name">Security Keys</field>
+            <field name="res_model">res.user.webauthn.credential</field>
+        </record>
+        <record model="ir.action.act_window.view" id="act_credential_tree">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="credential_view_tree"/>
+            <field name="act_window" ref="act_credential"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_credential_form">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="credential_view_form"/>
+            <field name="act_window" ref="act_credential"/>
+        </record>
+        <record model="ir.action.url" id="url_register_security_key">
+            <field name="name">Register Security Key</field>
+            <field name="url">/</field>
+        </record>
+        <record model="ir.action.wizard" id="act_register_security_key">
+            <field name="name">Register Security Key</field>
+            <field name="wiz_name">res.user.webauthn.register</field>
+        </record>
+        <menuitem name="Security Keys" id="menu_security_keys" sequence="90"/>
+        <menuitem parent="menu_security_keys" action="act_credential"
+            id="menu_credential" sequence="10"/>
+        <menuitem parent="menu_security_keys" action="act_register_security_key"
+            id="menu_register_security_key" sequence="20"/>
+    </data>
+</tryton>

@@ -78,10 +78,6 @@ msgctxt "model:ir.message,text:msg_invalid_label"
 msgid "The security key name cannot be empty."
 msgstr "El nom de la clau de seguretat no pot estar buit."
 
-msgctxt "model:ir.message,text:msg_confirm_last"
-msgid "Confirm revoking your last security key."
-msgstr "Confirma la revocació de la teva última clau de seguretat."
-
 msgctxt "model:ir.message,text:msg_missing_credential"
 msgid "A WebAuthn credential is required."
 msgstr "Cal una credencial WebAuthn."
@@ -117,3 +113,99 @@ msgstr "Detalls tècnics"
 msgctxt "model:ir.message,text:msg_mobile_requested_at"
 msgid "Requested at"
 msgstr "Data i hora de la sol·licitud"
+
+msgctxt "field:res.user,webauthn_keys:"
+msgid "Security Keys"
+msgstr "Claus de seguretat"
+
+msgctxt "model:res.user.webauthn.credential,name:"
+msgid "Security Key"
+msgstr "Clau de seguretat"
+
+msgctxt "field:res.user.webauthn.credential,label:"
+msgid "Label"
+msgstr "Nom"
+
+msgctxt "field:res.user.webauthn.credential,user:"
+msgid "User"
+msgstr "Usuari"
+
+msgctxt "field:res.user.webauthn.credential,credential_id:"
+msgid "Credential ID"
+msgstr "Identificador de la credencial"
+
+msgctxt "field:res.user.webauthn.credential,credential_public_key:"
+msgid "Credential Public Key"
+msgstr "Clau pública de la credencial"
+
+msgctxt "field:res.user.webauthn.credential,sign_count:"
+msgid "Sign Count"
+msgstr "Comptador de signatures"
+
+msgctxt "field:res.user.webauthn.credential,created_at:"
+msgid "Created At"
+msgstr "Data de registre"
+
+msgctxt "field:res.user.webauthn.credential,last_used_at:"
+msgid "Last Used At"
+msgstr "Últim ús"
+
+msgctxt "view:res.user.webauthn.credential:"
+msgid "Technical Information"
+msgstr "Informació tècnica"
+
+msgctxt "model:ir.rule.group,name:rule_group_credential"
+msgid "Own security keys"
+msgstr "Claus de seguretat pròpies"
+
+msgctxt "model:ir.rule.group,name:rule_group_credential_admin"
+msgid "All security keys"
+msgstr "Totes les claus de seguretat"
+
+msgctxt "help:res.user,webauthn_keys:"
+msgid "Rename or revoke registered keys. Use Register Security Key from the Security Keys menu to enroll your own device."
+msgstr "Reanomena o revoca les claus registrades. Utilitza Registra una clau de seguretat del menú Claus de seguretat per registrar el teu dispositiu."
+
+msgctxt "view:res.user:"
+msgid "To enroll your own device, use Security Keys → Register Security Key, then reload this list."
+msgstr "Per registrar el teu dispositiu, utilitza Claus de seguretat → Registra una clau de seguretat i recarrega aquesta llista."
+
+msgctxt "model:ir.message,text:msg_verified_registration_required"
+msgid "Register security keys using verified WebAuthn enrollment."
+msgstr "Registra les claus de seguretat mitjançant el registre verificat WebAuthn."
+
+msgctxt "model:ir.message,text:msg_credential_immutable"
+msgid "Only the name of a registered security key can be changed."
+msgstr "Només es pot modificar el nom d’una clau de seguretat registrada."
+
+msgctxt "model:ir.message,text:msg_credential_owner"
+msgid "You can only manage your own security keys in preferences."
+msgstr "A les preferències només pots gestionar les teves claus de seguretat."
+
+msgctxt "model:ir.message,text:msg_revoke_last_key"
+msgid "You are revoking the last security key for \"%(user)s\". A password or another authenticated session will be required to register a replacement. Continue?"
+msgstr "Estàs revocant l’última clau de seguretat de «%(user)s». Caldrà una contrasenya o una altra sessió autenticada per registrar-ne una de nova. Vols continuar?"
+
+msgctxt "model:ir.action,name:act_credential"
+msgid "Security Keys"
+msgstr "Claus de seguretat"
+
+msgctxt "model:ir.ui.menu,name:menu_security_keys"
+msgid "Security Keys"
+msgstr "Claus de seguretat"
+
+msgctxt "model:ir.ui.menu,name:menu_credential"
+msgid "Security Keys"
+msgstr "Claus de seguretat"
+
+msgctxt "model:ir.action,name:act_register_security_key"
+msgid "Register Security Key"
+msgstr "Registra una clau de seguretat"
+
+msgctxt "model:ir.action,name:url_register_security_key"
+msgid "Register Security Key"
+msgstr "Registra una clau de seguretat"
+
+msgctxt "model:ir.ui.menu,name:menu_register_security_key"
+msgid "Register Security Key"
+msgstr "Registra una clau de seguretat"

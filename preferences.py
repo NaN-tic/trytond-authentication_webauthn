@@ -3,10 +3,11 @@
 
 from trytond.exceptions import UserError
 from trytond.i18n import gettext
+from trytond.model import fields
+from trytond.model.exceptions import AccessError
 from trytond.pool import Pool, PoolMeta
-from trytond.rpc import RPC
-from trytond.transaction import Transaction
-from webauthn.helpers.exceptions import WebAuthnException
+from trytond.transaction import Transaction, check_access
+from trytond.wizard import StateAction, Wizard
 
 from . import common
 
@@ -14,22 +15,44 @@ from . import common
 class User(metaclass=PoolMeta):
     __name__ = 'res.user'
 
+    webauthn_keys = fields.One2Many(
+        'res.user.webauthn.credential', 'user', 'Security Keys',
+        help='Rename or revoke registered keys. Use Register Security Key '
+        'from the Security Keys menu to enroll your own device.')
+
     @classmethod
     def __setup__(cls):
         super().__setup__()
-        cls.__rpc__.update({
-                'webauthn_registration_options': RPC(
-                    readonly=False, check_access=False),
-                'webauthn_registration_finish': RPC(
-                    readonly=False, check_access=False),
-                'webauthn_registration_qr': RPC(
-                    readonly=False, check_access=False),
-                'webauthn_credentials': RPC(check_access=False),
-                'webauthn_rename': RPC(
-                    readonly=False, check_access=False),
-                'webauthn_revoke': RPC(
-                    readonly=False, check_access=False),
-                })
+        cls._preferences_fields.append('webauthn_keys')
+
+    @classmethod
+    def copy(cls, users, default=None):
+        default = default.copy() if default else {}
+        default['webauthn_keys'] = None
+        return super().copy(users, default=default)
+
+    @classmethod
+    def set_preferences(cls, values):
+        values = values.copy()
+        commands = values.pop('webauthn_keys', [])
+        user = cls._current_user()
+        # set_preferences deliberately bypasses user ACLs. Do not propagate
+        # that privilege to arbitrary One2Many commands or credential IDs.
+        owned = {key.id for key in user.webauthn_keys}
+        for command in commands:
+            if command[0] == 'write':
+                ids = set().union(*map(set, command[1::2]))
+            elif command[0] == 'delete':
+                ids = set(command[1])
+            else:
+                raise AccessError(gettext(
+                    'authentication_webauthn.msg_credential_immutable'))
+            if not ids <= owned:
+                raise AccessError(gettext(
+                    'authentication_webauthn.msg_credential_owner'))
+        with check_access():
+            cls.webauthn_keys.set(cls, 'webauthn_keys', [user.id], commands)
+        super().set_preferences(values)
 
     @classmethod
     def _current_user(cls):
@@ -38,89 +61,21 @@ class User(metaclass=PoolMeta):
             raise UserError(gettext('authentication_webauthn.msg_no_user'))
         return cls(user_id)
 
-    @classmethod
-    def webauthn_registration_options(cls):
-        user = cls._current_user()
-        Credential = Pool().get('res.user.webauthn.credential')
-        token, challenge = common.create_challenge(user.id, 'registration')
-        credentials = Credential.search([('user', '=', user.id)])
-        return {
-            'challenge_id': token,
-            'options': common.registration_options(
-                user, challenge, credentials),
-            }
+
+class RegisterSecurityKey(Wizard):
+    __name__ = 'res.user.webauthn.register'
+
+    start = StateAction('authentication_webauthn.url_register_security_key')
 
     @classmethod
-    def webauthn_registration_finish(cls, payload, label=None):
-        user = cls._current_user()
-        parsed = cls._parse_payload(payload)
-        if not parsed:
-            raise UserError(gettext(
-                'authentication_webauthn.msg_invalid_response'))
-        token, credential_data = parsed
-        challenge = common.get_challenge(user.id, token, 'registration')
-        if not challenge:
-            raise UserError(gettext(
-                'authentication_webauthn.msg_invalid_response'))
-        try:
-            cls._store_registration(
-                user.id, challenge, credential_data, label=label)
-        except WebAuthnException as exception:
-            raise UserError(gettext(
-                'authentication_webauthn.msg_invalid_response')) from exception
-        if not common.complete_operation(challenge, consumed=True):
-            raise UserError(gettext(
-                'authentication_webauthn.msg_invalid_response'))
-        return {'status': 'ok'}
+    def __setup__(cls):
+        super().__setup__()
+        cls.__rpc__['execute'].fresh_session = True
 
-    @classmethod
-    def webauthn_registration_qr(cls):
-        return common.create_operation(
-            cls._current_user(), 'registration', flow='preferences')
-
-    @classmethod
-    def webauthn_credentials(cls):
-        user = cls._current_user()
-        Credential = Pool().get('res.user.webauthn.credential')
-        credentials = Credential.search(
-            [('user', '=', user.id)], order=[('created_at', 'ASC')])
-        count = len(credentials)
-        return [
-            {
-                'id': credential.credential_id,
-                'label': credential.label,
-                'created_at': credential.created_at.isoformat(),
-                'last_used_at': (
-                    credential.last_used_at.isoformat()
-                    if credential.last_used_at else None),
-                'is_last': count == 1,
-                }
-            for credential in credentials]
-
-    @classmethod
-    def webauthn_rename(cls, credential_id, label):
-        user = cls._current_user()
-        label = label.strip()
-        if not label:
-            raise UserError(gettext(
-                'authentication_webauthn.msg_invalid_label'))
-        Credential = Pool().get('res.user.webauthn.credential')
-        records = Credential.search([
-                ('user', '=', user.id),
-                ('credential_id', '=', credential_id),
-                ], limit=1)
-        if records:
-            Credential.write(records, {'label': label})
-
-    @classmethod
-    def webauthn_revoke(cls, credential_id, confirm_last=False):
-        user = cls._current_user()
-        Credential = Pool().get('res.user.webauthn.credential')
-        credentials = Credential.search([('user', '=', user.id)])
-        records = [credential for credential in credentials
-            if credential.credential_id == credential_id]
-        if records:
-            if len(credentials) == 1 and not confirm_last:
-                raise UserError(gettext(
-                    'authentication_webauthn.msg_confirm_last'))
-            Credential.delete(records)
+    def do_start(self, action):
+        # The selected record/context must never choose the enrollment owner.
+        user = Pool().get('res.user')._current_user()
+        operation = common.create_operation(
+            user, 'registration', flow='preferences')
+        action['url'] = operation['mobile_url']
+        return action, {}

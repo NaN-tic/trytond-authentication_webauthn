@@ -99,22 +99,6 @@ class User(metaclass=PoolMeta):
     def _record_failed_attempt(operation):
         common.record_failed_attempt(operation)
 
-    @staticmethod
-    def _parse_payload(payload):
-        if isinstance(payload, str):
-            try:
-                payload = json.loads(payload)
-            except ValueError:
-                return
-        try:
-            token = payload['challenge_id']
-            credential = payload['credential']
-        except (KeyError, TypeError):
-            return
-        if not isinstance(token, str) or not credential:
-            return
-        return token, credential
-
     @classmethod
     def _verify_authentication(cls, user_id, challenge, credential_data):
         Credential = Pool().get('res.user.webauthn.credential')

@@ -63,3 +63,30 @@ display "Not available".
 The page also shows the operation's creation date and time in the phone's
 local time zone, including the zone label. The server supplies UTC as a
 fallback. Regenerating a QR creates a new operation with a new timestamp.
+
+Managing security keys
+======================
+
+The Security Keys tab in user preferences lists the current user's devices.
+Users can rename keys or delete them to revoke access. Administrators can also
+manage other users' keys from the user form or the Security Keys menu.
+Revoking the last key requires confirmation: a password or an existing
+authenticated session will be needed to enroll a replacement.
+
+Choose Security Keys > Register Security Key to open the registration page in
+the browser. Confirm with the device, then return to Tryton and reload the key
+list. Registration always belongs to the authenticated user, even when an
+administrator has selected another user's record. It requires a fresh session
+and the existing WebAuthn verification; keys cannot be created or copied using
+ordinary forms, imports, or model RPCs.
+
+Only the key label is editable. Ownership, credential identifiers, public keys,
+counters and timestamps cannot be changed through model RPCs. Challenges remain
+internal and are not exposed as views. Record rules isolate each user's keys,
+with an exception for administrators. Preference updates enforce ownership and
+credential permissions even though the standard preference RPC bypasses user
+write permissions.
+
+Enrollment is started by the registration wizard and completed through the
+WebAuthn HTTP routes. The former ``res.user.webauthn_*`` RPC methods are no
+longer exposed; key management uses the standard model and preference RPCs.

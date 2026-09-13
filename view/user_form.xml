@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<data>
+    <xpath expr="/form/notebook" position="inside">
+        <page name="webauthn_keys" col="1">
+            <field name="webauthn_keys" mode="tree,form"
+                view_ids="authentication_webauthn.credential_view_tree,authentication_webauthn.credential_view_form"/>
+            <label string="To enroll your own device, use Security Keys → Register Security Key, then reload this list."
+                id="registration_help"/>
+        </page>
+    </xpath>
+</data>

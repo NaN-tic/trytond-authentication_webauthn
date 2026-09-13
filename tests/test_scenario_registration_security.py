@@ -5,13 +5,13 @@ import unittest
 from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric import ec
-from proteus import Model
+from proteus import Model, Wizard
 from werkzeug.test import Client
 from webauthn.helpers import bytes_to_base64url, encode_cbor
 
 import trytond.config as config
 from trytond import security
-from trytond.exceptions import LoginException, UserError
+from trytond.exceptions import LoginException
 from trytond.modules.authentication_webauthn import common
 from trytond.pool import Pool
 from trytond.protocols.wrappers import Response
@@ -121,18 +121,14 @@ class TestRegistrationSecurity(unittest.TestCase):
         for channel in ['mobile', 'desktop', 'login', 'preferences']:
             with self.subTest(channel=channel):
                 with Transaction().start(database, user.id):
-                    if channel == 'preferences':
-                        registration = pool.get('res.user').webauthn_registration_options()
-                        options = registration['options']
-                        token = registration['challenge_id']
-                    else:
-                        descriptor = common.create_operation(
-                            pool.get('res.user')(user.id), 'registration')
-                        token = descriptor['desktop_token']
-                        operation = common.get_operation(token, channel='desktop')
-                        options = common.registration_options(
-                            operation.user, operation.challenge, [])
+                    descriptor = common.create_operation(
+                        pool.get('res.user')(user.id), 'registration',
+                        flow='preferences' if channel == 'preferences'
+                        else 'login')
+                    token = descriptor['desktop_token']
                     operation = common.get_operation(token, channel='desktop')
+                    options = common.registration_options(
+                        operation.user, operation.challenge, [])
                     expiry = operation.expires_at
                 credential = self.registration_response(options, channel.encode())
                 with patch.object(common, 'datetime') as clock:
@@ -140,7 +136,7 @@ class TestRegistrationSecurity(unittest.TestCase):
                         expiry - datetime.timedelta(seconds=1),
                         expiry + datetime.timedelta(seconds=1),
                         ]
-                    if channel == 'mobile':
+                    if channel in {'mobile', 'preferences'}:
                         response = client.post(
                             f"{base}/qr/{descriptor['mobile_token']}/complete",
                             json={'credential': credential})
@@ -156,12 +152,6 @@ class TestRegistrationSecurity(unittest.TestCase):
                                 'desktop_token': token, 'credential': credential,
                                 },
                             }, cache=False))
-                    else:
-                        with self.assertRaises(UserError):
-                            with Transaction().start(database, user.id):
-                                pool.get('res.user').webauthn_registration_finish({
-                                    'challenge_id': token, 'credential': credential,
-                                    })
                 with Transaction().start(database, 0):
                     self.assertFalse(Credential.search([
                         ('credential_id', '=', credential['id']),
@@ -171,20 +161,24 @@ class TestRegistrationSecurity(unittest.TestCase):
                     self.assertFalse(operation.consumed)
 
         # A successful preference enrollment must not become a login token.
+        cfg.user = user.id
+        desktop_token = 'preferences-desktop-token'
+        with patch.object(common, 'token_urlsafe', side_effect=[
+                'preferences-mobile-token', desktop_token]):
+            registration = Wizard('res.user.webauthn.register')
+        url, = registration.actions
+        token = url.rsplit('/', 1)[1]
         with Transaction().start(database, user.id):
-            descriptor = pool.get('res.user').webauthn_registration_qr()
-        options = client.get(f'{base}/desktop/options', query_string={
-            'desktop_token': descriptor['desktop_token'],
-            }).json['options']
+            operation = common.get_operation(token, channel='mobile')
+            self.assertEqual(operation.flow, 'preferences')
+            self.assertEqual(operation.user.id, user.id)
+        options = client.get(url + '/options').json['options']
         credential = self.registration_response(options, b'preferences-key')
-        response = client.post(f'{base}/desktop/complete', json={
-            'desktop_token': descriptor['desktop_token'],
-            'credential': credential,
-            })
+        response = client.post(url + '/complete', json={'credential': credential})
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(security.login(database, user.login, {
             'password': 'registration-test-password',
-            'webauthn': {'desktop_token': descriptor['desktop_token']},
+            'webauthn': {'desktop_token': desktop_token},
             }, cache=False))
         with Transaction().start(database, 0):
             self.assertEqual(len(Credential.search([
