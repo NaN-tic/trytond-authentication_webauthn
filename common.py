@@ -243,21 +243,6 @@ def record_failed_attempt(operation):
     return True
 
 
-def create_challenge(user_id, purpose):
-    User = Pool().get('res.user')
-    descriptor = create_operation(User(user_id), purpose, flow='preferences')
-    operation = get_operation(
-        descriptor['desktop_token'], channel='desktop', pending=True)
-    return descriptor['desktop_token'], operation.challenge
-
-
-def get_challenge(user_id, token, purpose=None):
-    operation = get_operation(
-        token, channel='desktop', pending=True, purpose=purpose)
-    if operation and operation.user.id == user_id:
-        return operation
-
-
 def registration_options(user, challenge, credentials):
     excluded = [PublicKeyCredentialDescriptor(
             id=credential.credential_id_bytes)

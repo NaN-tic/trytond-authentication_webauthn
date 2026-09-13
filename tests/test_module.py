@@ -3,7 +3,6 @@
 import datetime
 import hashlib
 import json
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import trytond.config as config
@@ -11,7 +10,6 @@ from trytond.exceptions import LoginException
 from trytond.pool import Pool
 from trytond.tests import test_tryton
 from trytond.tests.test_tryton import with_transaction
-from trytond.transaction import Transaction
 
 from trytond.modules.authentication_webauthn import common
 
@@ -141,24 +139,6 @@ class AuthenticationWebAuthnTestCase(test_tryton.ModuleTestCase):
         self.assertEqual(context.exception.name, 'webauthn')
         self.assertEqual(context.exception.type, 'webauthn')
 
-    @with_transaction()
-    def test_registration_options_are_bound_to_current_user(self):
-        User = Pool().get('res.user')
-        user = self.create_user()
-
-        with Transaction().set_user(user.id):
-            result = User.webauthn_registration_options()
-
-        self.assertIn('challenge_id', result)
-        self.assertEqual(result['options']['rp']['id'], common.rp_id())
-        self.assertEqual(result['options']['user']['name'], user.login)
-        self.assertEqual(result['options']['authenticatorSelection']['userVerification'],
-            'required')
-        self.assertEqual(
-            result['options']['authenticatorSelection']['residentKey'],
-            'required')
-        self.assertEqual(result['options']['hints'], ['hybrid', 'client-device'])
-
     def test_webauthn_settings_derive_from_web_base_url(self):
         def get(section, option, default=None):
             if section == 'web' and option == 'base_url':
@@ -176,33 +156,3 @@ class AuthenticationWebAuthnTestCase(test_tryton.ModuleTestCase):
         result = common.authentication_options(b'challenge', [])
 
         self.assertEqual(result['hints'], ['hybrid', 'client-device'])
-
-    @with_transaction()
-    def test_registration_finish_stores_verified_credential(self):
-        User = Pool().get('res.user')
-        Credential = Pool().get('res.user.webauthn.credential')
-        user = self.create_user()
-        verified = SimpleNamespace(
-            credential_id=b'credential-id',
-            credential_public_key=b'public-key',
-            sign_count=0,
-            aaguid='00000000-0000-0000-0000-000000000000',
-            user_verified=True,
-            )
-
-        with Transaction().set_user(user.id):
-            options = User.webauthn_registration_options()
-            payload = {
-                'challenge_id': options['challenge_id'],
-                'credential': {'id': 'credential-id'},
-                }
-            with patch(
-                    'trytond.modules.authentication_webauthn.res.'
-                    'verify_registration_response',
-                    return_value=verified):
-                result = User.webauthn_registration_finish(payload)
-
-        self.assertEqual(result['status'], 'ok')
-        credentials = Credential.search([('user', '=', user.id)])
-        self.assertEqual(len(credentials), 1)
-        self.assertEqual(credentials[0].credential_public_key, b'public-key')

@@ -1,15 +1,22 @@
 # This file is part of Tryton.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
 
-from trytond.model import ModelSQL, Unique, fields
+from trytond.exceptions import UserError, UserWarning
+from trytond.i18n import gettext
+from trytond.model import ModelSQL, ModelView, Unique, fields
+from trytond.model.exceptions import AccessError
+from trytond.pool import Pool
+from trytond.transaction import Transaction
 from webauthn.helpers import base64url_to_bytes
 
 
-class WebAuthnCredential(ModelSQL):
+class WebAuthnCredential(ModelSQL, ModelView):
     __name__ = 'res.user.webauthn.credential'
+    __string__ = 'Security Key'
+    _rec_name = 'label'
 
     user = fields.Many2One(
-        'res.user', 'User', required=True, ondelete='CASCADE')
+        'res.user', 'User', required=True, readonly=True, ondelete='CASCADE')
     credential_id = fields.Char('Credential ID', required=True, readonly=True,
         strip=False)
     credential_public_key = fields.Binary(
@@ -27,11 +34,62 @@ class WebAuthnCredential(ModelSQL):
     @classmethod
     def __setup__(cls):
         super().__setup__()
+        cls.__rpc__['write'].fresh_session = True
+        cls.__rpc__['delete'].fresh_session = True
         table = cls.__table__()
         cls._sql_constraints += [
             ('credential_id_unique', Unique(table, table.credential_id),
                 'Credential ID must be unique.'),
             ]
+
+    @classmethod
+    def create(cls, vlist):
+        # Readonly widgets and configurable ACLs are not an enrollment boundary.
+        if Transaction().check_access:
+            raise AccessError(gettext(
+                'authentication_webauthn.msg_verified_registration_required'))
+        return super().create(vlist)
+
+    @classmethod
+    def write(cls, records, values, *args):
+        actions = iter((records, values) + args)
+        updates = []
+        for records, values in zip(actions, actions):
+            if Transaction().check_access and values.keys() - {'label'}:
+                raise AccessError(gettext(
+                    'authentication_webauthn.msg_credential_immutable'))
+            values = values.copy()
+            if 'label' in values:
+                label = values['label']
+                if not isinstance(label, str) or not label.strip():
+                    raise UserError(gettext(
+                        'authentication_webauthn.msg_invalid_label'))
+                values['label'] = label.strip()
+            updates.extend((records, values))
+        super().write(*updates)
+
+    @classmethod
+    def delete(cls, records):
+        if Transaction().check_access:
+            pool = Pool()
+            pool.get('ir.model.access').check(cls.__name__, 'delete')
+            pool.get('ir.rule').check(
+                cls.__name__, [r.id for r in records], 'delete')
+            # Serialize revocations so concurrent deletions cannot both miss
+            # the last credential. Authentication also updates this table.
+            cls.lock()
+            Warning = pool.get('res.user.warning')
+            ids = [r.id for r in records]
+            for user in {r.user for r in records}:
+                if not cls.search([
+                        ('user', '=', user.id), ('id', 'not in', ids)],
+                        limit=1):
+                    warning = Warning.format('webauthn_last_key', [user])
+                    if Warning.check(warning):
+                        raise UserWarning(warning, gettext(
+                            'authentication_webauthn.msg_revoke_last_key',
+                            user=user.rec_name))
+        super().delete(records)
 
 
 class WebAuthnChallenge(ModelSQL):

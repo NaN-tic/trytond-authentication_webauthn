@@ -3,6 +3,18 @@
 this repository contains the full copyright notices and license terms. -->
 <tryton>
     <data grouped="1">
+        <record model="ir.message" id="msg_verified_registration_required">
+            <field name="text">Register security keys using verified WebAuthn enrollment.</field>
+        </record>
+        <record model="ir.message" id="msg_credential_immutable">
+            <field name="text">Only the name of a registered security key can be changed.</field>
+        </record>
+        <record model="ir.message" id="msg_credential_owner">
+            <field name="text">You can only manage your own security keys in preferences.</field>
+        </record>
+        <record model="ir.message" id="msg_revoke_last_key">
+            <field name="text">You are revoking the last security key for "%(user)s". A password or another authenticated session will be required to register a replacement. Continue?</field>
+        </record>
         <record model="ir.message" id="msg_login">
             <field name="text">Authenticate with your security key or device.</field>
         </record>
@@ -23,9 +35,6 @@ this repository contains the full copyright notices and license terms. -->
         </record>
         <record model="ir.message" id="msg_invalid_label">
             <field name="text">The security key name cannot be empty.</field>
-        </record>
-        <record model="ir.message" id="msg_confirm_last">
-            <field name="text">Confirm revoking your last security key.</field>
         </record>
         <record model="ir.message" id="msg_mobile_add_key">
             <field name="text">Add security key</field>
