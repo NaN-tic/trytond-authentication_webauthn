@@ -22,7 +22,15 @@ Configure the public URL once in the web section::
     [web]
     base_url = https://tryton.empresa.local
 
-The URL used by the browser is read from ``[web] base_url``. The WebAuthn
+The URL used by the browser is read from ``[web] base_url``. If unset,
+``[web] hostname`` is used, falling back to the request host or Tryton's
+default hostname. HTTPS is detected like ``__href__``: from a secure request
+or the ``[ssl] certificate`` / ``privatekey`` configuration. Behind a reverse
+proxy, configure ``[web] num_proxies`` for the trusted proxy chain so Tryton
+recognizes HTTPS requests. Without a request, configure SSL or an explicit
+HTTPS ``base_url`` if HTTPS terminates at a proxy.
+
+The WebAuthn
 ``rp_id`` is derived from its host and the expected ``origin`` from its scheme,
 host and port. The same HTTPS ``base_url`` must be reachable by both the
 desktop and mobile browsers in production. ``rp_name`` is the optional name
