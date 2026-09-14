@@ -11,6 +11,7 @@ from sql.conditionals import Case
 import trytond.config as config
 from trytond.pool import Pool
 from trytond.transaction import Transaction
+from trytond.url import HOSTNAME, is_secure
 from webauthn import (
     generate_authentication_options,
     generate_registration_options,
@@ -58,9 +59,11 @@ def base_url(request=None):
     configured = config.get('web', 'base_url', default='').strip()
     if configured:
         return configured.rstrip('/')
-    if request and request.get('http_host'):
-        return f"{request.get('scheme', 'https')}://{request['http_host']}".rstrip('/')
-    return 'http://localhost:8024'
+    request = request or (Transaction().context or {}).get('_request') or {}
+    hostname = (config.get('web', 'hostname', default='').strip()
+        or request.get('http_host') or HOSTNAME)
+    scheme = 'https' if request.get('is_secure') or is_secure() else 'http'
+    return f'{scheme}://{hostname}'
 
 
 def verification_requirement():
