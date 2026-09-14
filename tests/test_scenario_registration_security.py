@@ -167,14 +167,16 @@ class TestRegistrationSecurity(unittest.TestCase):
                 'preferences-mobile-token', desktop_token]):
             registration = Wizard('res.user.webauthn.register')
         url, = registration.actions
-        token = url.rsplit('/', 1)[1]
+        mobile_url = url.split('#', 1)[0]
+        token = mobile_url.rsplit('/', 1)[1]
         with Transaction().start(database, user.id):
             operation = common.get_operation(token, channel='mobile')
             self.assertEqual(operation.flow, 'preferences')
             self.assertEqual(operation.user.id, user.id)
-        options = client.get(url + '/options').json['options']
+        options = client.get(mobile_url + '/options').json['options']
         credential = self.registration_response(options, b'preferences-key')
-        response = client.post(url + '/complete', json={'credential': credential})
+        response = client.post(
+            mobile_url + '/complete', json={'credential': credential})
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(security.login(database, user.login, {
             'password': 'registration-test-password',
