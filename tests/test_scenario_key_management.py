@@ -33,9 +33,10 @@ class TestKeyManagement(unittest.TestCase):
     def register(self, cfg, credential_id):
         wizard = Wizard('res.user.webauthn.register')
         url, = wizard.actions
+        mobile_url = url.split('#', 1)[0]
         client = Client(app, Response)
-        self.assertEqual(client.get(url).status_code, 200)
-        response = client.get(url + '/options')
+        self.assertEqual(client.get(mobile_url).status_code, 200)
+        response = client.get(mobile_url + '/options')
         self.assertEqual(response.status_code, 200)
         options = response.json['options']
         self.assertEqual(options['user']['id'], bytes_to_base64url(
@@ -72,7 +73,7 @@ class TestKeyManagement(unittest.TestCase):
                     })),
                 },
             }
-        response = client.post(url + '/complete', json={
+        response = client.post(mobile_url + '/complete', json={
             'credential': credential,
             })
         self.assertEqual(response.status_code, 200)
@@ -204,9 +205,10 @@ class TestKeyManagement(unittest.TestCase):
         session, start, _ = wizard.create(context)
         result = wizard.execute(session, {}, start, context)
         url = result['actions'][0][0]['url']
+        mobile_url = url.split('#', 1)[0]
         with Transaction().start(cfg.database_name, 0):
             operation = common.get_operation(
-                url.rsplit('/', 1)[1], channel='mobile')
+                mobile_url.rsplit('/', 1)[1], channel='mobile')
             self.assertEqual(operation.user.id, admin)
             self.assertEqual(operation.flow, 'preferences')
             self.assertTrue(pool.get('res.user.webauthn.register',
