@@ -77,5 +77,7 @@ class RegisterSecurityKey(Wizard):
         user = Pool().get('res.user')._current_user()
         operation = common.create_operation(
             user, 'registration', flow='preferences')
-        action['url'] = operation['mobile_url']
+        action['url'] = (
+            f"{operation['mobile_url']}#desktop_token="
+            f"{operation['desktop_token']}")
         return action, {}
