@@ -31,7 +31,7 @@ class TestRegistrationSecurity(unittest.TestCase):
         drop_db()
         super().tearDown()
 
-    def registration_response(self, options, credential_id):
+    def registration_response(self, options, credential_id, origin=None):
         # Emulate an ES256 authenticator with user presence and verification.
         public_key = ec.generate_private_key(ec.SECP256R1()).public_key()
         numbers = public_key.public_numbers()
@@ -47,7 +47,7 @@ class TestRegistrationSecurity(unittest.TestCase):
         client_data = json.dumps({
             'type': 'webauthn.create',
             'challenge': options['challenge'],
-            'origin': common.origin(),
+            'origin': origin or common.origin(),
             }).encode()
         return {
             'id': bytes_to_base64url(credential_id),
@@ -91,10 +91,13 @@ class TestRegistrationSecurity(unittest.TestCase):
                 {'password': 'registration-test-password'}, cache=False)
         self.assertEqual(registration.exception.type, 'webauthn_registration')
         descriptor = json.loads(registration.exception.message)
-        options = client.get(f'{base}/desktop/options', query_string={
+        options_response = client.get(f'{base}/desktop/options', query_string={
             'desktop_token': descriptor['desktop_token'],
-            }).json['options']
-        credential = self.registration_response(options, b'initial-key')
+            })
+        options = options_response.json['options']
+        credential = self.registration_response(
+            options, b'initial-key',
+            options_response.request.host_url.rstrip('/'))
         response = client.post(f'{base}/desktop/complete', json={
             'desktop_token': descriptor['desktop_token'],
             'credential': credential,
@@ -127,10 +130,27 @@ class TestRegistrationSecurity(unittest.TestCase):
                         else 'login')
                     token = descriptor['desktop_token']
                     operation = common.get_operation(token, channel='desktop')
-                    options = common.registration_options(
-                        operation.user, operation.challenge, [])
                     expiry = operation.expires_at
-                credential = self.registration_response(options, channel.encode())
+                    if channel == 'login':
+                        options = common.registration_options(
+                            operation.user, operation.challenge, [])
+                if channel in {'mobile', 'preferences'}:
+                    options_response = client.get(
+                        f"{base}/qr/{descriptor['mobile_token']}/options")
+                elif channel == 'desktop':
+                    options_response = client.get(
+                        f'{base}/desktop/options', query_string={
+                            'desktop_token': token,
+                            })
+                else:
+                    options_response = None
+                if options_response is not None:
+                    options = options_response.json['options']
+                    origin = options_response.request.host_url.rstrip('/')
+                else:
+                    origin = common.origin()
+                credential = self.registration_response(
+                    options, channel.encode(), origin)
                 with patch.object(common, 'datetime') as clock:
                     clock.datetime.now.side_effect = [
                         expiry - datetime.timedelta(seconds=1),
@@ -173,8 +193,11 @@ class TestRegistrationSecurity(unittest.TestCase):
             operation = common.get_operation(token, channel='mobile')
             self.assertEqual(operation.flow, 'preferences')
             self.assertEqual(operation.user.id, user.id)
-        options = client.get(mobile_url + '/options').json['options']
-        credential = self.registration_response(options, b'preferences-key')
+        options_response = client.get(mobile_url + '/options')
+        options = options_response.json['options']
+        credential = self.registration_response(
+            options, b'preferences-key',
+            options_response.request.host_url.rstrip('/'))
         response = client.post(
             mobile_url + '/complete', json={'credential': credential})
         self.assertEqual(response.status_code, 200)

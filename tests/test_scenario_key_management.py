@@ -39,9 +39,12 @@ class TestKeyManagement(unittest.TestCase):
         response = client.get(mobile_url + '/options')
         self.assertEqual(response.status_code, 200)
         options = response.json['options']
-        self.assertEqual(options['user']['id'], bytes_to_base64url(
-            common.user_handle(cfg.user)))
-        self.assertEqual(options['rp']['id'], common.rp_id())
+        rp_id = options['rp']['id']
+        user_handle = hashlib.sha256(
+            f'{rp_id}:{cfg.user}'.encode('utf-8')).digest()
+        self.assertEqual(
+            options['user']['id'], bytes_to_base64url(user_handle))
+        self.assertEqual(response.json['rp_id'], rp_id)
         self.assertEqual(options['authenticatorSelection']['userVerification'],
             'required')
         self.assertEqual(options['authenticatorSelection']['residentKey'],
@@ -66,7 +69,7 @@ class TestKeyManagement(unittest.TestCase):
                 'clientDataJSON': bytes_to_base64url(json.dumps({
                     'type': 'webauthn.create',
                     'challenge': options['challenge'],
-                    'origin': common.origin(),
+                    'origin': response.request.host_url.rstrip('/'),
                     }).encode()),
                 'attestationObject': bytes_to_base64url(encode_cbor({
                     'fmt': 'none', 'attStmt': {}, 'authData': auth_data,
