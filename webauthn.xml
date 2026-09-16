@@ -81,10 +81,13 @@
             <field name="name">Register Security Key</field>
             <field name="wiz_name">res.user.webauthn.register</field>
         </record>
+        <record model="ir.model.button" id="user_register_security_key">
+            <field name="name">register_security_key</field>
+            <field name="string">Register Security Key</field>
+            <field name="model">res.user</field>
+        </record>
         <menuitem name="Security Keys" id="menu_security_keys" sequence="90"/>
         <menuitem parent="menu_security_keys" action="act_credential"
             id="menu_credential" sequence="10"/>
-        <menuitem parent="menu_security_keys" action="act_register_security_key"
-            id="menu_register_security_key" sequence="20"/>
     </data>
 </tryton>
