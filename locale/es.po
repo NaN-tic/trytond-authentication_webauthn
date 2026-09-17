@@ -163,12 +163,12 @@ msgid "All security keys"
 msgstr "Todas las claves de seguridad"
 
 msgctxt "help:res.user,webauthn_keys:"
-msgid "Rename or revoke registered keys. Use Register Security Key from the Security Keys menu to enroll your own device."
-msgstr "Renombra o revoca las claves registradas. Utiliza Registrar una clave de seguridad del menú Claves de seguridad para registrar tu dispositivo."
+msgid "Rename or revoke registered keys. Use Register Security Key to enroll your own device."
+msgstr "Renombra o revoca las claves registradas. Utiliza Registrar una clave de seguridad para registrar tu dispositivo."
 
 msgctxt "view:res.user:"
-msgid "To enroll your own device, use Security Keys → Register Security Key, then reload this list."
-msgstr "Para registrar tu dispositivo, utiliza Claves de seguridad → Registrar una clave de seguridad y recarga esta lista."
+msgid "After registration, reload this list."
+msgstr "Después de registrar la clave, recarga esta lista."
 
 msgctxt "model:ir.message,text:msg_verified_registration_required"
 msgid "Register security keys using verified WebAuthn enrollment."
@@ -198,14 +198,14 @@ msgctxt "model:ir.ui.menu,name:menu_credential"
 msgid "Security Keys"
 msgstr "Claves de seguridad"
 
+msgctxt "model:ir.model.button,string:user_register_security_key"
+msgid "Register Security Key"
+msgstr "Registrar una clave de seguridad"
+
 msgctxt "model:ir.action,name:act_register_security_key"
 msgid "Register Security Key"
 msgstr "Registrar una clave de seguridad"
 
 msgctxt "model:ir.action,name:url_register_security_key"
-msgid "Register Security Key"
-msgstr "Registrar una clave de seguridad"
-
-msgctxt "model:ir.ui.menu,name:menu_register_security_key"
 msgid "Register Security Key"
 msgstr "Registrar una clave de seguridad"

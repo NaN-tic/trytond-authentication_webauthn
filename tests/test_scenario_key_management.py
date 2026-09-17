@@ -115,9 +115,19 @@ class TestKeyManagement(unittest.TestCase):
         prefs = users.get_preferences(False, {})
         self.assertEqual(set(prefs['webauthn_keys']), {alice_key, backup})
         view = users.get_preferences_fields_view({})
-        self.assertTrue(etree.fromstring(view['arch']).xpath(
+        preferences_arch = etree.fromstring(view['arch'])
+        self.assertTrue(preferences_arch.xpath(
+            '//page[@name="webauthn_keys"]/'
+            'button[@name="register_security_key"]'))
+        self.assertTrue(preferences_arch.xpath(
             '//page[@name="webauthn_keys"]/field[@name="webauthn_keys"]'))
         self.assertFalse(view['fields']['webauthn_keys']['readonly'])
+
+        registration = User.click([alice], 'register_security_key')
+        self.assertIsInstance(registration, Wizard)
+        self.assertEqual(registration.name, 'res.user.webauthn.register')
+        registration._proxy.delete(
+            registration.session_id, registration._context)
         for type_ in ['tree', 'form']:
             view = keys.fields_view_get(None, type_, {})
             self.assertIn('label', view['fields'])
