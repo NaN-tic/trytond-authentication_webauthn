@@ -102,6 +102,9 @@ class User(metaclass=PoolMeta):
     @classmethod
     def _verify_authentication(cls, user_id, challenge, credential_data):
         Credential = Pool().get('res.user.webauthn.credential')
+        if (not isinstance(credential_data, dict)
+                or not isinstance(credential_data.get('rawId'), str)):
+            raise WebAuthnException('Invalid credential identifier')
         try:
             credential_id = base64url_to_bytes(credential_data['rawId'])
         except (KeyError, TypeError, ValueError):
@@ -130,6 +133,8 @@ class User(metaclass=PoolMeta):
 
     @classmethod
     def _store_registration(cls, user_id, challenge, credential_data, label=None):
+        if not isinstance(credential_data, (dict, str)):
+            raise WebAuthnException('Invalid registration credential')
         Credential = Pool().get('res.user.webauthn.credential')
         verified = verify_registration_response(
             credential=credential_data,

@@ -138,6 +138,8 @@ def create_operation(user, purpose, flow='login', *, initiator=None):
 
 
 def get_operation(token, *, channel, pending=False, purpose=None):
+    if not isinstance(token, str) or not token or len(token) > 256:
+        return
     Operation = Pool().get('res.user.webauthn.challenge')
     token_field = {
         'mobile': 'mobile_token_hash',
