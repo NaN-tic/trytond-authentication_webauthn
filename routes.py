@@ -241,7 +241,10 @@ def mobile_options(request, pool, mobile_token):
 def mobile_complete(request, pool, mobile_token):
     token = _token(request, 'mobile_token')
     operation = _operation(token, 'mobile', True)
-    credential = (request.get_json(silent=True) or {}).get('credential')
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        abort(HTTPStatus.BAD_REQUEST)
+    credential = payload.get('credential')
     if not credential:
         return _json({
             'error': gettext('authentication_webauthn.msg_missing_credential')
@@ -303,7 +306,9 @@ def desktop_options(request, pool):
 @with_pool
 @with_transaction(readonly=False)
 def desktop_complete(request, pool):
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        abort(HTTPStatus.BAD_REQUEST)
     operation = _operation(payload.get('desktop_token', ''), 'desktop', True)
     credential = payload.get('credential')
     if not credential:
@@ -332,7 +337,9 @@ def desktop_complete(request, pool):
 @with_pool
 @with_transaction(readonly=False)
 def desktop_regenerate(request, pool):
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        abort(HTTPStatus.BAD_REQUEST)
     operation = _operation(payload.get('desktop_token', ''), 'desktop', True)
     pool.get('res.user.webauthn.challenge').write([operation], {
             'status': 'cancelled', 'status_reason': 'regenerated'})
@@ -347,7 +354,9 @@ def desktop_regenerate(request, pool):
 @with_pool
 @with_transaction(readonly=False)
 def desktop_cancel(request, pool):
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        abort(HTTPStatus.BAD_REQUEST)
     token = payload.get('desktop_token') or request.args.get('desktop_token', '')
     operation = _operation(token, 'desktop', True)
     pool.get('res.user.webauthn.challenge').write([operation], {
