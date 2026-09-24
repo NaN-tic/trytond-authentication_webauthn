@@ -48,10 +48,6 @@
             <field name="rule_group" ref="rule_group_credential_admin"/>
             <field name="domain" eval="[]" pyson="1"/>
         </record>
-        <record model="ir.rule.group-res.group" id="rule_credential_admin_group">
-            <field name="rule_group" ref="rule_group_credential_admin"/>
-            <field name="group" ref="res.group_admin"/>
-        </record>
         <record model="ir.model.access" id="access_challenge">
             <field name="model">res.user.webauthn.challenge</field>
             <field name="perm_read" eval="False"/>
