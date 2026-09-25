@@ -3,9 +3,10 @@
 
 from trytond.exceptions import UserError
 from trytond.i18n import gettext
-from trytond.model import fields
+from trytond.model import ModelView, fields
 from trytond.model.exceptions import AccessError
 from trytond.pool import Pool, PoolMeta
+from trytond.rpc import RPC
 from trytond.transaction import Transaction, check_access
 from trytond.wizard import StateAction, Wizard
 
@@ -18,12 +19,23 @@ class User(metaclass=PoolMeta):
     webauthn_keys = fields.One2Many(
         'res.user.webauthn.credential', 'user', 'Security Keys',
         help='Rename or revoke registered keys. Use Register Security Key '
-        'from the Security Keys menu to enroll your own device.')
+        'to enroll your own device.')
 
     @classmethod
     def __setup__(cls):
         super().__setup__()
         cls._preferences_fields.append('webauthn_keys')
+        cls._buttons.update({
+            'register_security_key': {},
+            })
+        # Preference forms must allow this action without res.user write ACL.
+        cls.__rpc__['register_security_key'] = RPC(
+            readonly=False, instantiate=0, check_access=False)
+
+    @classmethod
+    @ModelView.button_action('authentication_webauthn.act_register_security_key')
+    def register_security_key(cls, users):
+        pass
 
     @classmethod
     def copy(cls, users, default=None):
@@ -71,6 +83,21 @@ class RegisterSecurityKey(Wizard):
     def __setup__(cls):
         super().__setup__()
         cls.__rpc__['execute'].fresh_session = True
+
+    @classmethod
+    def check_access(cls):
+        # The wizard registers only the authenticated user, not active records.
+        transaction = Transaction()
+        context = transaction.context
+        active_ids = set(context.get('active_ids') or [])
+        if (
+                context.get('active_model') == 'res.user'
+                and context.get('active_id') == transaction.user
+                and active_ids == {transaction.user}):
+            with transaction.set_context(
+                    active_model=None, active_id=None, active_ids=None):
+                return super().check_access()
+        return super().check_access()
 
     def do_start(self, action):
         # The selected record/context must never choose the enrollment owner.
