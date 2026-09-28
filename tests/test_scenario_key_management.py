@@ -143,7 +143,9 @@ class TestKeyManagement(unittest.TestCase):
             {alice_key, backup})
         other = users.read([bob.id], ['webauthn_keys'], {})
         self.assertFalse(other[0]['webauthn_keys'])
-        for context in [{}, {'user_id': bob.id, '_check_access': False}]:
+        # Proteus allows _check_access to be disabled explicitly for in-process
+        # tests.  Actual RPC clients can not set private context values.
+        for context in [{}, {'user_id': bob.id}]:
             with self.assertRaises(AccessError):
                 keys.read([bob_key], ['label'], context)
             with self.assertRaises(AccessError):
