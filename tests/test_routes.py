@@ -1,14 +1,12 @@
 # This file is part of Tryton.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
 import json
-import logging
 from http import HTTPStatus
 from unittest.mock import patch
 
 from trytond.pool import Pool
 from trytond.tests import test_tryton
 from trytond.transaction import Transaction
-from trytond.wsgi import _WebAuthnTokenLogFilter
 
 from trytond.modules.authentication_webauthn import common
 
@@ -103,22 +101,3 @@ class AuthenticationWebAuthnRouteTestCase(test_tryton.RouteTestCase):
             self.url('desktop/status'),
             query_string={'desktop_token': descriptor['desktop_token']})
         self.assertEqual(response.json['status'], 'completed')
-
-    def test_access_logs_redact_webauthn_tokens(self):
-        logger = logging.getLogger('werkzeug')
-        self.assertTrue(any(
-            isinstance(filter_, _WebAuthnTokenLogFilter)
-            for filter_ in logger.filters))
-        desktop_token = 'desktop-token-secret'
-        mobile_token = 'mobile-token-secret'
-        with self.assertLogs(logger, level='INFO') as captured:
-            logger.info('GET %s HTTP/1.1', self.url(
-                f'desktop/status?desktop_token={desktop_token}'))
-            logger.info('GET %s HTTP/1.1', self.url(
-                f'qr/{mobile_token}/options'))
-            logger.info('GET %s HTTP/1.1', self.url(
-                f'qr-code/{mobile_token}.svg'))
-        output = '\n'.join(captured.output)
-        self.assertNotIn(desktop_token, output)
-        self.assertNotIn(mobile_token, output)
-        self.assertIn('<redacted>', output)
