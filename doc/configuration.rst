@@ -61,8 +61,8 @@ WebAuthn option-generation and credential-verification failures are logged at
 warning level on the server with the operation ID, purpose and verifier error.
 The credential payload is not logged. The client response remains generic.
 
-Tryton, Werkzeug and gevent access logs redact WebAuthn operation tokens from
-request URLs. Configure any reverse proxy to redact those URLs as well.
+WebAuthn operation tokens are carried in request URLs. Configure access-log
+handlers and reverse proxies to redact those URLs.
 
 The mobile confirmation page displays the initiating connection's IP address
 and a readable browser name, major version and operating system, inferred from
