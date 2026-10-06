@@ -43,7 +43,7 @@ class TestKeyManagement(unittest.TestCase):
             common.user_handle(cfg.user)))
         self.assertEqual(options['rp']['id'], common.rp_id())
         self.assertEqual(options['authenticatorSelection']['userVerification'],
-            'required')
+            'preferred')
         self.assertEqual(options['authenticatorSelection']['residentKey'],
             'required')
         self.assertEqual(options['hints'], ['hybrid', 'client-device'])

@@ -73,7 +73,7 @@ def verification_requirement():
         'discouraged': UserVerificationRequirement.DISCOURAGED,
         }
     value = config.get(
-        'authentication_webauthn', 'user_verification', default='required')
+        'authentication_webauthn', 'user_verification', default='preferred')
     try:
         return values[value.lower()]
     except KeyError as exception:

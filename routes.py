@@ -1,8 +1,9 @@
 # This file is part of Tryton.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-from html import escape
 import json
+import logging
 import re
+from html import escape
 from io import BytesIO
 from pathlib import Path
 
@@ -16,6 +17,8 @@ from qrcode.image.svg import SvgImage
 from webauthn.helpers.exceptions import WebAuthnException
 
 from . import common
+
+logger = logging.getLogger(__name__)
 
 
 def _json(data, status=HTTPStatus.OK):
@@ -230,7 +233,10 @@ def mobile_options(request, pool, mobile_token):
     operation = _operation(_token(request, 'mobile_token'), 'mobile', True)
     try:
         options = _options(pool, operation)
-    except WebAuthnException:
+    except WebAuthnException as exception:
+        logger.warning(
+            "WebAuthn options failed (operation=%s, purpose=%s): %s",
+            operation.id, operation.purpose, exception)
         abort(HTTPStatus.BAD_REQUEST)
     return _json({'options': options, 'rp_id': common.rp_id(), 'purpose': operation.purpose})
 
@@ -252,7 +258,10 @@ def mobile_complete(request, pool, mobile_token):
             User._store_registration(operation.user.id, operation, credential)
         else:
             User._verify_authentication(operation.user.id, operation, credential)
-    except WebAuthnException:
+    except WebAuthnException as exception:
+        logger.warning(
+            "WebAuthn credential rejected (operation=%s, purpose=%s): %s",
+            operation.id, operation.purpose, exception)
         User._record_failed_attempt(operation)
         return _json({'status': 'rejected'}, HTTPStatus.BAD_REQUEST)
     if not common.complete_operation(operation):
@@ -294,7 +303,10 @@ def desktop_options(request, pool):
     operation = _operation(_token(request, 'desktop_token'), 'desktop', True)
     try:
         options = _options(pool, operation)
-    except WebAuthnException:
+    except WebAuthnException as exception:
+        logger.warning(
+            "WebAuthn options failed (operation=%s, purpose=%s): %s",
+            operation.id, operation.purpose, exception)
         abort(HTTPStatus.BAD_REQUEST)
     return _json({'options': options, 'purpose': operation.purpose})
 
@@ -316,7 +328,10 @@ def desktop_complete(request, pool):
             User._store_registration(operation.user.id, operation, credential)
         else:
             User._verify_authentication(operation.user.id, operation, credential)
-    except WebAuthnException:
+    except WebAuthnException as exception:
+        logger.warning(
+            "WebAuthn credential rejected (operation=%s, purpose=%s): %s",
+            operation.id, operation.purpose, exception)
         User._record_failed_attempt(operation)
         return _json({'status': 'rejected'}, HTTPStatus.BAD_REQUEST)
     if not common.complete_operation(operation):

@@ -2,6 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import datetime
 import json
+import logging
 
 from trytond.exceptions import LoginException
 from trytond.i18n import gettext
@@ -15,6 +16,8 @@ from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
 from webauthn.helpers.exceptions import WebAuthnException
 
 from . import common
+
+logger = logging.getLogger(__name__)
 
 
 class User(metaclass=PoolMeta):
@@ -70,7 +73,10 @@ class User(metaclass=PoolMeta):
             else:
                 cls._verify_authentication(
                     user_id, operation, credential_data)
-        except WebAuthnException:
+        except WebAuthnException as exception:
+            logger.warning(
+                "WebAuthn credential rejected (operation=%s, purpose=%s): %s",
+                operation.id, operation.purpose, exception)
             cls._record_failed_attempt(operation)
             return
         if common.complete_operation(operation, consumed=True):
