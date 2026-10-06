@@ -59,9 +59,7 @@ WebAuthn remain available as alternatives from the QR dialog.
 
 WebAuthn option-generation and credential-verification failures are logged at
 warning level on the server with the operation ID, purpose and verifier error.
-Failures in the browser's local WebAuthn flow are logged to its console with
-the purpose, authenticator type and error name/message/status. Neither path
-logs the credential payload. The client response remains generic.
+The credential payload is not logged. The client response remains generic.
 
 Tryton, Werkzeug and gevent access logs redact WebAuthn operation tokens from
 request URLs. Configure any reverse proxy to redact those URLs as well.
