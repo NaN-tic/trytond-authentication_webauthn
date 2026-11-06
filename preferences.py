@@ -72,6 +72,11 @@ class RegisterSecurityKey(Wizard):
         super().__setup__()
         cls.__rpc__['execute'].fresh_session = True
 
+    @classmethod
+    def check_access(cls):
+        # Any authenticated user can register a key for their own account.
+        Pool().get('res.user')._current_user()
+
     def do_start(self, action):
         # The selected record/context must never choose the enrollment owner.
         user = Pool().get('res.user')._current_user()
