@@ -3,7 +3,7 @@
     <xpath expr="/form/notebook" position="inside">
         <page name="webauthn_keys" col="1">
             <button name="register_security_key"/>
-            <field name="webauthn_keys" mode="tree,form"
+            <field name="webauthn_keys" mode="tree,form" create="0"
                 view_ids="authentication_webauthn.credential_view_tree,authentication_webauthn.credential_view_form"/>
             <label string="After registration, reload this list."
                 id="registration_help"/>
