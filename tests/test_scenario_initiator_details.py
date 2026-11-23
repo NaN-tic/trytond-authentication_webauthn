@@ -151,7 +151,10 @@ class TestInitiatorDetails(unittest.TestCase):
                 ]:
             with self.subTest(agent=agent):
                 with Transaction().start(database, user.id, context={
-                        '_request': {'user_agent': agent},
+                        '_request': {
+                            'is_secure': False,
+                            'user_agent': agent,
+                            },
                         }):
                     descriptor = common.create_operation(
                         Pool().get('res.user')(user.id), 'registration',
