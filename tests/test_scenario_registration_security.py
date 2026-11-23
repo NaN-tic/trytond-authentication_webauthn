@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import logging
 import unittest
 from unittest.mock import patch
 
@@ -31,8 +32,9 @@ class TestRegistrationSecurity(unittest.TestCase):
         drop_db()
         super().tearDown()
 
-    def registration_response(self, options, credential_id, origin=None):
-        # Emulate an ES256 authenticator with user presence and verification.
+    def registration_response(
+            self, options, credential_id, origin=None, user_verified=True):
+        # Emulate an ES256 authenticator with user presence and optional UV.
         public_key = ec.generate_private_key(ec.SECP256R1()).public_key()
         numbers = public_key.public_numbers()
         cose_key = encode_cbor({
@@ -40,9 +42,10 @@ class TestRegistrationSecurity(unittest.TestCase):
             -2: numbers.x.to_bytes(32, 'big'),
             -3: numbers.y.to_bytes(32, 'big'),
             })
+        flags = 0x41 | (0x04 if user_verified else 0)
         auth_data = (
             hashlib.sha256(options['rp']['id'].encode()).digest()
-            + b'\x45' + bytes(4) + bytes(16)
+            + bytes([flags]) + bytes(4) + bytes(16)
             + len(credential_id).to_bytes(2, 'big') + credential_id + cose_key)
         client_data = json.dumps({
             'type': 'webauthn.create',
@@ -209,3 +212,83 @@ class TestRegistrationSecurity(unittest.TestCase):
             self.assertEqual(len(Credential.search([
                 ('user', '=', user.id),
                 ])), 2)
+
+    def test_desktop_registration_rejection_logs_safely(self):
+        cfg = activate_modules('authentication_webauthn')
+        User = Model.get('res.user')
+        user = User(
+            name='Rejected registration', login='rejected-registration')
+        user.save()
+        database = cfg.database_name
+        with Transaction().start(database, user.id):
+            descriptor = common.create_operation(
+                Pool(database).get('res.user')(user.id), 'registration')
+
+        client = Client(app, Response)
+        base = f'/{database}/authentication/webauthn'
+        options_response = client.get(
+            f'{base}/desktop/options',
+            query_string={'desktop_token': descriptor['desktop_token']})
+        options = options_response.json['options']
+        credential = self.registration_response(
+            options, b'rejected-registration-key',
+            origin='https://invalid.example')
+
+        self.addCleanup(logging.disable, logging.root.manager.disable)
+        logging.disable(logging.NOTSET)
+        with self.assertLogs(
+                'trytond.modules.authentication_webauthn.routes',
+                level='WARNING') as captured:
+            response = client.post(f'{base}/desktop/complete', json={
+                'desktop_token': descriptor['desktop_token'],
+                'credential': credential,
+                })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json, {'status': 'rejected'})
+        log = '\n'.join(captured.output)
+        self.assertIn('WebAuthn credential rejected', log)
+        self.assertIn('origin', log.lower())
+        self.assertNotIn(credential['id'], log)
+        self.assertNotIn(
+            credential['response']['attestationObject'], log)
+
+    def test_registration_accepts_user_presence_without_uv(self):
+        cfg = activate_modules('authentication_webauthn')
+        if not config.has_section('authentication_webauthn'):
+            config.add_section('authentication_webauthn')
+            self.addCleanup(config.remove_section, 'authentication_webauthn')
+        verification = config.get(
+            'authentication_webauthn', 'user_verification',
+            default='preferred')
+        self.addCleanup(config.set, 'authentication_webauthn',
+            'user_verification', verification)
+        config.set('authentication_webauthn', 'user_verification',
+            'preferred')
+        User = Model.get('res.user')
+        user = User(
+            name='Presence-only registration', login='presence-only')
+        user.save()
+        database = cfg.database_name
+        with Transaction().start(database, user.id):
+            descriptor = common.create_operation(
+                Pool(database).get('res.user')(user.id), 'registration')
+
+        client = Client(app, Response)
+        base = f'/{database}/authentication/webauthn'
+        options_response = client.get(
+            f'{base}/desktop/options',
+            query_string={'desktop_token': descriptor['desktop_token']})
+        options = options_response.json['options']
+        self.assertEqual(
+            options['authenticatorSelection']['userVerification'],
+            'preferred')
+        credential = self.registration_response(
+            options, b'presence-only-key', user_verified=False)
+
+        response = client.post(f'{base}/desktop/complete', json={
+            'desktop_token': descriptor['desktop_token'],
+            'credential': credential,
+            })
+
+        self.assertEqual(response.status_code, 200)
