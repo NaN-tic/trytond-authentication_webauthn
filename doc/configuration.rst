@@ -12,7 +12,7 @@ The relying-party settings are read from ``[authentication_webauthn]``::
 
     [authentication_webauthn]
     rp_name = Tryton
-    user_verification = required
+    user_verification = preferred
     timeout = 60000
     challenge_ttl = 120
     max_attempts = 5
@@ -37,8 +37,12 @@ desktop and mobile browsers in production. ``rp_name`` is the optional name
 displayed by the authenticator during registration and defaults to ``Tryton``.
 
 ``user_verification`` controls whether the authenticator must verify the user:
-``required`` enforces biometrics, a PIN or device unlock; ``preferred`` asks
-for verification when available; and ``discouraged`` does not request it.
+``required`` enforces biometrics, a PIN or device unlock; ``preferred`` (the
+default) requests verification when available but also accepts authenticators
+that only prove physical presence; and ``discouraged`` does not request it.
+This setting applies to both registration and authentication. Authenticators
+must still prove physical presence, typically by requiring a touch. With
+``preferred``, someone who steals the key can authenticate if they can touch it.
 
 Initial registration during login always requires the account password,
 including when ``authentications = webauthn`` is used alone. The password is
@@ -52,6 +56,13 @@ operation. Only SHA-256 token hashes are stored. The mobile page performs
 ``navigator.credentials.create`` or ``navigator.credentials.get`` and the
 desktop polls the operation until it is completed. USB FIDO2 and local browser
 WebAuthn remain available as alternatives from the QR dialog.
+
+WebAuthn option-generation and credential-verification failures are logged at
+warning level on the server with the operation ID, purpose and verifier error.
+The credential payload is not logged. The client response remains generic.
+
+WebAuthn operation tokens are carried in request URLs. Configure access-log
+handlers and reverse proxies to redact those URLs.
 
 The mobile confirmation page displays the initiating connection's IP address
 and a readable browser name, major version and operating system, inferred from
@@ -81,12 +92,12 @@ manage other users' keys from the user form or the Security Keys menu.
 Revoking the last key requires confirmation: a password or an existing
 authenticated session will be needed to enroll a replacement.
 
-Choose Security Keys > Register Security Key to open the registration page in
-the browser. Confirm with the device, then return to Tryton and reload the key
-list. Registration always belongs to the authenticated user, even when an
-administrator has selected another user's record. It requires a fresh session
-and the existing WebAuthn verification; keys cannot be created or copied using
-ordinary forms, imports, or model RPCs.
+Use the Register Security Key button in the Security Keys tab to open the
+registration page in the browser. Confirm with the device, then return to
+Tryton and reload the key list. Registration always belongs to the authenticated
+user, even when an administrator has selected another user's record. It
+requires a fresh session and the existing WebAuthn verification; keys cannot be
+created or copied using ordinary forms, imports, or model RPCs.
 
 Only the key label is editable. Ownership, credential identifiers, public keys,
 counters and timestamps cannot be changed through model RPCs. Challenges remain
