@@ -33,7 +33,7 @@ class TestRegistrationSecurity(unittest.TestCase):
         super().tearDown()
 
     def registration_response(
-            self, options, credential_id, origin=None, user_verified=True):
+            self, options, credential_id, origin, user_verified=True):
         # Emulate an ES256 authenticator with user presence and optional UV.
         public_key = ec.generate_private_key(ec.SECP256R1()).public_key()
         numbers = public_key.public_numbers()
@@ -50,7 +50,7 @@ class TestRegistrationSecurity(unittest.TestCase):
         client_data = json.dumps({
             'type': 'webauthn.create',
             'challenge': options['challenge'],
-            'origin': origin or common.origin(),
+            'origin': origin,
             }).encode()
         return {
             'id': bytes_to_base64url(credential_id),
@@ -284,7 +284,8 @@ class TestRegistrationSecurity(unittest.TestCase):
             options['authenticatorSelection']['userVerification'],
             'preferred')
         credential = self.registration_response(
-            options, b'presence-only-key', user_verified=False)
+            options, b'presence-only-key',
+            options_response.request.host_url.rstrip('/'), user_verified=False)
 
         response = client.post(f'{base}/desktop/complete', json={
             'desktop_token': descriptor['desktop_token'],
