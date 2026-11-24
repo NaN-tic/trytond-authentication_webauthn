@@ -126,8 +126,6 @@ class TestKeyManagement(unittest.TestCase):
         registration = User.click([alice], 'register_security_key')
         self.assertIsInstance(registration, Wizard)
         self.assertEqual(registration.name, 'res.user.webauthn.register')
-        registration._proxy.delete(
-            registration.session_id, registration._context)
         for type_ in ['tree', 'form']:
             view = keys.fields_view_get(None, type_, {})
             self.assertIn('label', view['fields'])
